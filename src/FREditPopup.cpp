@@ -53,6 +53,16 @@ void FRLevelInfoLayer::checkFakeRate() {
 
 void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bool update, bool coins) {
     m_fields->m_fakeRateData = { .id = m_level->m_levelID, .stars = stars, .feature = feature, .difficulty = difficulty };
+    if (Loader::get()->isModLoaded("itzkiba.grandpa_demon")) {
+        removeChildByTag(69420);
+        for (auto child : CCArrayExt<CCNode*>(getChildren())) {
+            if (child->getID().compare("grd-difficulty") == 0) child->setVisible(false);
+        }
+        if (auto grdInfinity = getChildByID("grd-infinity")) grdInfinity->setVisible(false);
+        m_difficultySprite->setVisible(true);
+        if (auto featureGlow = m_difficultySprite->getChildByTag(69420))
+            featureGlow->setPosition(m_difficultySprite->getContentWidth() * 0.5f, m_difficultySprite->getContentHeight() * 0.5f);
+    }
     auto winSize = CCDirector::sharedDirector()->getWinSize();
     auto gsm = GameStatsManager::sharedState();
     auto showStars = stars > 0 || m_level->m_dailyID > 0 || m_level->m_gauntletLevel;

@@ -9,12 +9,25 @@ class $modify(FRLevelCell, LevelCell) {
     void loadFromLevel(GJGameLevel* level) {
         LevelCell::loadFromLevel(level);
         auto difficultyContainer = m_mainLayer->getChildByID("difficulty-container");
+        if (!difficultyContainer) difficultyContainer = m_mainLayer->getChildByID("grd-demon-icon-layer");
         if (difficultyContainer) {
             auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
             auto it = std::find_if(vec.begin(), vec.end(), [this](auto const& item) { return item.id == m_level->m_levelID; });
             if (it != vec.end()) {
-                auto fakeRateData = *it;
                 auto difficultySprite = static_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
+                if (difficultyContainer->getID().compare("grd-demon-icon-layer") == 0) {
+                    difficultyContainer->removeChildByTag(69420);
+                    difficultySprite->setVisible(true);
+                    if (auto grdInfinity = static_cast<CCSprite*>(difficultyContainer->getChildByID("grd-infinity"))) {
+                        grdInfinity->setVisible(false);
+                        static_cast<CCSprite*>(difficultyContainer->getChildren()->objectAtIndex(difficultyContainer->getChildrenCount() - 2))->setVisible(false);
+                    }
+                    else static_cast<CCSprite*>(difficultyContainer->getChildren()->lastObject())->setVisible(false);
+                    if (auto featureGlow = difficultySprite->getChildByTag(69420))
+                        featureGlow->setPosition(difficultySprite->getContentWidth() * 0.5f, difficultySprite->getContentHeight() * 0.5f);
+                }
+
+                auto fakeRateData = *it;
                 difficultySprite->updateDifficultyFrame(fakeRateData.difficulty, (GJDifficultyName)0);
                 difficultySprite->updateFeatureState((GJFeatureState)fakeRateData.feature);
                 auto addCoins = level->m_coins > 0 && !m_compactView;
@@ -114,6 +127,7 @@ class $modify(FRLevelCell, LevelCell) {
 
     void fixMoreDifficultiesIncompatibility(FakeRateSaveData const& fakeRateData) {
         auto difficultyContainer = m_mainLayer->getChildByID("difficulty-container");
+        if (!difficultyContainer) difficultyContainer = m_mainLayer->getChildByID("grd-demon-icon-layer");
 
         if (auto existingCasualSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(difficultyContainer, "uproxide.more_difficulties/MD_Difficulty04.png")))
             existingCasualSprite->removeFromParent();
