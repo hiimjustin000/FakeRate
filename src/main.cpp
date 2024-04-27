@@ -2,6 +2,10 @@
 #include "FREditPopup.hpp"
 
 class $modify(FRLevelCell, LevelCell) {
+    static void onModify(auto& self) {
+        (void)self.setHookPriority("LevelCell::loadFromLevel", -100);
+    }
+
     void loadFromLevel(GJGameLevel* level) {
         LevelCell::loadFromLevel(level);
         auto difficultyContainer = m_mainLayer->getChildByID("difficulty-container");
@@ -36,16 +40,13 @@ class $modify(FRLevelCell, LevelCell) {
                     starsLabel->setString(std::to_string(fakeRateData.stars).c_str());
                 }
                 else {
-                    auto starsIcon = static_cast<CCSprite*>(difficultyContainer->getChildByID("stars-icon"));
-                    if (starsIcon) starsIcon->removeFromParent();
-                    auto starsLabel = static_cast<CCLabelBMFont*>(difficultyContainer->getChildByID("stars-label"));
-                    if (starsLabel) starsLabel->removeFromParent();
+                    if (auto starsIcon = static_cast<CCSprite*>(difficultyContainer->getChildByID("stars-icon"))) starsIcon->removeFromParent();
+                    if (auto starsLabel = static_cast<CCLabelBMFont*>(difficultyContainer->getChildByID("stars-label"))) starsLabel->removeFromParent();
                 }
                 auto gsm = GameStatsManager::sharedState();
                 auto coinParent = m_compactView ? m_mainLayer : difficultyContainer;
                 for (int i = 1; i <= 3; i++) {
-                    auto coin = static_cast<CCSprite*>(coinParent->getChildByID("coin-icon-" + std::to_string(i)));
-                    if (coin) {
+                    if (auto coin = static_cast<CCSprite*>(coinParent->getChildByID("coin-icon-" + std::to_string(i)))) {
                         if (!m_compactView) coin->setPositionY(difficultySprite->getPositionY() - 31.5f - (showStars ? 14.0f : 0.0f)
                             - (m_level->m_gauntletLevel || m_level->m_dailyID > 0 ? 14.5f : 0.0f));
                         auto coinStr = fmt::format("{}_{}", m_level->m_levelID.value(), i);
@@ -93,7 +94,7 @@ class $modify(FRLevelCell, LevelCell) {
                         orbsLabel->setID("orbs-label");
                         m_mainLayer->addChild(orbsLabel);
                     }
-                    auto orbs = FRLevelInfoLayer::getBaseCurrency(fakeRateData.stars);
+                    auto orbs = FRUtilities::getBaseCurrency(fakeRateData.stars);
                     auto totalOrbs = (int)floorf(orbs * 1.25f);
                     orbsLabel->setString((m_level->m_orbCompletion == 100 ?
                         fmt::format("{}", totalOrbs) :
@@ -102,11 +103,49 @@ class $modify(FRLevelCell, LevelCell) {
                     if (m_level->m_orbCompletion == 100) orbsLabel->setColor({ 100, 255, 255 });
                 }
                 else {
-                    auto orbsIcon = static_cast<CCSprite*>(m_mainLayer->getChildByID("orbs-icon"));
-                    if (orbsIcon) orbsIcon->removeFromParent();
-                    auto orbsLabel = static_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("orbs-label"));
-                    if (orbsLabel) orbsLabel->removeFromParent();
+                    if (auto orbsIcon = static_cast<CCSprite*>(m_mainLayer->getChildByID("orbs-icon"))) orbsIcon->removeFromParent();
+                    if (auto orbsLabel = static_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("orbs-label"))) orbsLabel->removeFromParent();
                 }
+
+                if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(fakeRateData);
+            }
+        }
+    }
+
+    void fixMoreDifficultiesIncompatibility(FakeRateSaveData const& fakeRateData) {
+        auto difficultyContainer = m_mainLayer->getChildByID("difficulty-container");
+
+        if (auto existingCasualSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(difficultyContainer, "uproxide.more_difficulties/MD_Difficulty04.png")))
+            existingCasualSprite->removeFromParent();
+        if (auto existingToughSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(difficultyContainer, "uproxide.more_difficulties/MD_Difficulty07.png")))
+            existingToughSprite->removeFromParent();
+        if (auto existingCruelSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(difficultyContainer, "uproxide.more_difficulties/MD_Difficulty09.png")))
+            existingCruelSprite->removeFromParent();
+
+        auto difficultySprite = static_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
+        difficultySprite->setOpacity(255);
+        auto pos = CCPoint { difficultySprite->getPositionX() + 0.25f, difficultySprite->getPositionY() - 0.1f };
+        switch (fakeRateData.stars) {
+            case 4: {
+                auto casualSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty04.png");
+                casualSprite->setPosition(pos);
+                difficultyContainer->addChild(casualSprite, 3);
+                difficultySprite->setOpacity(0);
+                break;
+            }
+            case 7: {
+                auto toughSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty07.png");
+                toughSprite->setPosition(pos);
+                difficultyContainer->addChild(toughSprite, 3);
+                difficultySprite->setOpacity(0);
+                break;
+            }
+            case 9: {
+                auto cruelSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty09.png");
+                cruelSprite->setPosition(pos);
+                difficultyContainer->addChild(cruelSprite, 3);
+                difficultySprite->setOpacity(0);
+                break;
             }
         }
     }

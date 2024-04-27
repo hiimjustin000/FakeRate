@@ -1,40 +1,10 @@
 #include "FREditPopup.hpp"
 
-int FRLevelInfoLayer::getBaseCurrency(int stars) {
-    switch (stars) {
-        case 2:
-            return 40;
-        case 3:
-            return 60;
-        case 4:
-            return 100;
-        case 5:
-            return 140;
-        case 6:
-            return 180;
-        case 7:
-            return 220;
-        case 8:
-            return 280;
-        case 9:
-            return 340;
-        case 10:
-            return 400;
-        default:
-            return 0;
-    }
-}
-
-int FRLevelInfoLayer::getDifficultyFromLevel(GJGameLevel* level) {
-    auto difficulty = level->getAverageDifficulty();
-    if (level->m_demon > 0) switch (level->m_demonDifficulty) {
-        case 3: difficulty = 7; break;
-        case 4: difficulty = 8; break;
-        case 5: difficulty = 9; break;
-        case 6: difficulty = 10; break;
-        default: difficulty = 6; break;
-    }
-    return difficulty;
+void FRLevelInfoLayer::onModify(auto& self) {
+    (void)self.setHookPriority("LevelInfoLayer::init", -100);
+    (void)self.setHookPriority("LevelInfoLayer::levelDownloadFinished", -100);
+    (void)self.setHookPriority("LevelInfoLayer::levelUpdateFinished", -100);
+    (void)self.setHookPriority("LevelInfoLayer::likedItem", -100);
 }
 
 bool FRLevelInfoLayer::init(GJGameLevel* level, bool challenge) {
@@ -49,11 +19,27 @@ bool FRLevelInfoLayer::init(GJGameLevel* level, bool challenge) {
     leftSideMenu->addChild(fakeRateButton);
     leftSideMenu->updateLayout();
 
+    checkFakeRate();
+
     return true;
 }
 
-void FRLevelInfoLayer::updateLabelValues() {
-    LevelInfoLayer::updateLabelValues();
+void FRLevelInfoLayer::levelDownloadFinished(GJGameLevel* level) {
+    LevelInfoLayer::levelDownloadFinished(level);
+    checkFakeRate();
+}
+
+void FRLevelInfoLayer::levelUpdateFinished(GJGameLevel* level, UpdateResponse response) {
+    LevelInfoLayer::levelUpdateFinished(level, response);
+    checkFakeRate();
+}
+
+void FRLevelInfoLayer::likedItem(LikeItemType type, int id, bool liked) {
+    LevelInfoLayer::likedItem(type, id, liked);
+    checkFakeRate();
+}
+
+void FRLevelInfoLayer::checkFakeRate() {
     auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
     auto it = std::find_if(vec.begin(), vec.end(), [this](auto const& item) { return item.id == m_level->m_levelID; });
     if (it != vec.end()) updateFakeRate(it->stars, it->feature, it->difficulty, false, true);
@@ -61,7 +47,7 @@ void FRLevelInfoLayer::updateLabelValues() {
         .id = m_level->m_levelID,
         .stars = m_level->m_stars,
         .feature = m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0,
-        .difficulty = getDifficultyFromLevel(m_level)
+        .difficulty = FRUtilities::getDifficultyFromLevel(m_level)
     };
 }
 
@@ -121,16 +107,17 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
     if (showStars) {
         m_orbsIcon->setPositionY(yPos - yOffset * 2.0f);
         m_orbsLabel->setPositionY(m_orbsIcon->getPositionY());
-        auto orbs = FRLevelInfoLayer::getBaseCurrency(stars);
+        auto orbs = FRUtilities::getBaseCurrency(stars);
         auto totalOrbs = (int)floorf(orbs * 1.25f);
         m_orbsLabel->setString(fmt::format("{}/{}", (int)floorf(orbs * m_level->m_orbCompletion / 100.0f), totalOrbs).c_str());
         m_orbsLabel->limitLabelWidth(60.0f, 0.5f, 0.0f);
     }
-    auto exactTime = static_cast<CCLabelBMFont*>(getChildByID("cvolton.betterinfo/exact-time"));
-    if (exactTime) {
+    if (auto exactTime = static_cast<CCLabelBMFont*>(getChildByID("cvolton.betterinfo/exact-time"))) {
         exactTime->setPositionY(m_lengthLabel->getPositionY() - 2.0f);
         m_lengthLabel->setPositionY(m_lengthLabel->getPositionY() + 6.0f);
     }
+
+    if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility();
 }
 
 void FRLevelInfoLayer::onFakeRate(CCObject*) {
@@ -144,6 +131,41 @@ void FRLevelInfoLayer::onFakeRate(CCObject*) {
     popup->show();
 }
 
+void FRLevelInfoLayer::fixMoreDifficultiesIncompatibility() {
+    if (auto existingCasualSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(this, "uproxide.more_difficulties/MD_Difficulty04.png")))
+        existingCasualSprite->removeFromParent();
+    if (auto existingToughSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(this, "uproxide.more_difficulties/MD_Difficulty07.png")))
+        existingToughSprite->removeFromParent();
+    if (auto existingCruelSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(this, "uproxide.more_difficulties/MD_Difficulty09.png")))
+        existingCruelSprite->removeFromParent();
+
+    m_difficultySprite->setOpacity(255);
+    auto pos = CCPoint { m_difficultySprite->getPositionX() + 0.25f, m_difficultySprite->getPositionY() - 0.1f };
+    switch (m_fields->m_fakeRateData.stars) {
+        case 4: {
+            auto casualSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty04.png");
+            casualSprite->setPosition(pos);
+            addChild(casualSprite, 3);
+            m_difficultySprite->setOpacity(0);
+            break;
+        }
+        case 7: {
+            auto toughSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty07.png");
+            toughSprite->setPosition(pos);
+            addChild(toughSprite, 3);
+            m_difficultySprite->setOpacity(0);
+            break;
+        }
+        case 9: {
+            auto cruelSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty09.png");
+            cruelSprite->setPosition(pos);
+            addChild(cruelSprite, 3);
+            m_difficultySprite->setOpacity(0);
+            break;
+        }
+    }
+}
+
 FREditPopup* FREditPopup::create(GJGameLevel* level, int stars, int feature, int difficulty) {
     auto ret = new FREditPopup();
     if (ret && ret->initAnchored(200.0f, 150.0f, level, stars, feature, difficulty)) {
@@ -152,20 +174,6 @@ FREditPopup* FREditPopup::create(GJGameLevel* level, int stars, int feature, int
     }
     CC_SAFE_DELETE(ret);
     return nullptr;
-}
-
-int FREditPopup::getDifficultyForStars(int stars) {
-    switch (stars) {
-        case 0: return 0;
-        case 1: return -1;
-        case 2: return 1;
-        case 3: return 2;
-        case 4: case 5: return 3;
-        case 6: case 7: return 4;
-        case 8: case 9: return 5;
-        case 10: return 6;
-        default: return 0;
-    }
 }
 
 bool FREditPopup::setup(GJGameLevel* level, int stars, int feature, int difficulty) {
@@ -178,6 +186,25 @@ bool FREditPopup::setup(GJGameLevel* level, int stars, int feature, int difficul
     m_difficultySprite = GJDifficultySprite::create(difficulty, (GJDifficultyName)1);
     m_difficultySprite->setPositionX(100.0f);
     m_mainLayer->addChild(m_difficultySprite);
+
+    if (Loader::get()->isModInstalled("uproxide.more_difficulties")) {
+        auto pos = CCPoint { 100.25f, 84.9f };
+
+        m_casualSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty04.png");
+        m_casualSprite->setPosition(pos);
+        m_casualSprite->setVisible(false);
+        m_mainLayer->addChild(m_casualSprite);
+
+        m_toughSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty07.png");
+        m_toughSprite->setPosition(pos);
+        m_toughSprite->setVisible(false);
+        m_mainLayer->addChild(m_toughSprite);
+
+        m_cruelSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty09.png");
+        m_cruelSprite->setPosition(pos);
+        m_cruelSprite->setVisible(false);
+        m_mainLayer->addChild(m_cruelSprite);
+    }
 
     m_starSprite = CCSprite::createWithSpriteFrameName(m_level->m_levelLength < 5 ? "star_small01_001.png" : "moon_small01_001.png");
     m_mainLayer->addChild(m_starSprite);
@@ -286,7 +313,7 @@ void FREditPopup::onFeatureRight(CCObject*) {
 }
 
 void FREditPopup::updateLabels() {
-    m_difficulty = m_stars >= 10 ? m_difficulty > 5 ? m_difficulty : 7 : getDifficultyForStars(m_stars);
+    m_difficulty = m_stars >= 10 ? m_difficulty > 5 ? m_difficulty : 7 : FRUtilities::getDifficultyForStars(m_stars);
     m_difficultySprite->updateDifficultyFrame(m_difficulty, (GJDifficultyName)1);
     m_difficultySprite->updateFeatureState((GJFeatureState)m_feature);
     m_difficultySprite->setPositionY(85.0f + (m_difficulty > 5 ? 5.0f : 0.0f));
@@ -301,6 +328,13 @@ void FREditPopup::updateLabels() {
     m_difficultyRightArrow->setEnabled(m_difficulty > 5);
     m_featureLeftArrow->setPositionY(m_difficultySprite->getPositionY() + 5.0f);
     m_featureRightArrow->setPositionY(m_difficultySprite->getPositionY() + 5.0f);
+    if (Loader::get()->isModInstalled("uproxide.more_difficulties")) {
+        m_casualSprite->setVisible(m_stars == 4);
+        m_toughSprite->setVisible(m_stars == 7);
+        m_cruelSprite->setVisible(m_stars == 9);
+        if (m_stars == 4 || m_stars == 7 || m_stars == 9) m_difficultySprite->setOpacity(0);
+        else m_difficultySprite->setOpacity(255);
+    }
 }
 
 void FREditPopup::onAdd(CCObject*) {

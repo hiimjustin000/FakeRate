@@ -1,8 +1,6 @@
 #include <vector>
-#include <Geode/Geode.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
-
-using namespace geode::prelude;
+#include "FRUtilities.hpp"
 
 struct FakeRateSaveData {
     int id;
@@ -11,16 +9,19 @@ struct FakeRateSaveData {
     int difficulty;
 };
 
-class FRLevelInfoLayerDummy; struct FRLevelInfoLayer : geode::Modify<FRLevelInfoLayer, LevelInfoLayer> {
+class FRLevelInfoLayerDummy; struct FRLevelInfoLayer : Modify<FRLevelInfoLayer, LevelInfoLayer> {
     struct Fields {
         FakeRateSaveData m_fakeRateData;
     };
-    static int getDifficultyFromLevel(GJGameLevel*);
-    static int getBaseCurrency(int);
+    static void onModify(auto& self);
     bool init(GJGameLevel*, bool);
-    void updateLabelValues();
+    void levelDownloadFinished(GJGameLevel*);
+    void levelUpdateFinished(GJGameLevel*, UpdateResponse);
+    void likedItem(LikeItemType, int, bool);
+    void checkFakeRate();
     void updateFakeRate(int, int, int, bool, bool);
     void onFakeRate(CCObject*);
+    void fixMoreDifficultiesIncompatibility();
 };
 
 class FREditPopup : public Popup<GJGameLevel*, int, int, int> {
@@ -30,6 +31,9 @@ protected:
     int m_feature;
     int m_difficulty;
     GJDifficultySprite* m_difficultySprite;
+    CCSprite* m_casualSprite;
+    CCSprite* m_toughSprite;
+    CCSprite* m_cruelSprite;
     CCSprite* m_starSprite;
     CCLabelBMFont* m_starsLabel;
     CCMenuItemSpriteExtra* m_starLeftArrow;
@@ -44,7 +48,6 @@ protected:
 public:
     FRLevelInfoLayer* m_delegate;
     static FREditPopup* create(GJGameLevel*, int, int, int);
-    static int getDifficultyForStars(int);
 
     void onStarLeft(CCObject*);
     void onStarRight(CCObject*);
