@@ -95,7 +95,7 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
         auto diamondLabel = getChildOfType<CCLabelBMFont>(this, update ? 5 : m_level->m_dailyID > 0 ? 7 : 6);
         auto diamondIcon = static_cast<CCSprite*>(getChildBySpriteFrameName(this, "diamond_small01_001.png"));
         auto diamonds = stars > 1 ? stars + 2 : 0;
-        diamondLabel->setString(fmt::format("{}/{}", (int)floorf(diamonds * m_level->m_orbCompletion / 100.0f), diamonds).c_str());
+        diamondLabel->setString(fmt::format("{}/{}", (int)floorf(diamonds * m_level->m_normalPercent / 100.0f), diamonds).c_str());
         diamondIcon->setPosition({
             m_difficultySprite->getPositionX() + diamondLabel->getScaledContentSize().width * 0.5f + 2.0f,
             m_difficultySprite->getPositionY() - (difficulty > 5 ? 9.0f : 0.0f) - 44.5f
@@ -119,7 +119,7 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
         m_orbsLabel->setPositionY(m_orbsIcon->getPositionY());
         auto orbs = FRUtilities::getBaseCurrency(stars);
         auto totalOrbs = (int)floorf(orbs * 1.25f);
-        m_orbsLabel->setString(fmt::format("{}/{}", (int)floorf(orbs * m_level->m_orbCompletion / 100.0f), totalOrbs).c_str());
+        m_orbsLabel->setString(fmt::format("{}/{}", (int)floorf(m_level->m_normalPercent != 100 ? orbs * m_level->m_normalPercent / 100.0f : totalOrbs), totalOrbs).c_str());
         m_orbsLabel->limitLabelWidth(60.0f, 0.5f, 0.0f);
     }
     if (auto exactTime = static_cast<CCLabelBMFont*>(getChildByID("cvolton.betterinfo/exact-time"))) {
@@ -142,34 +142,60 @@ void FRLevelInfoLayer::onFakeRate(CCObject*) {
 }
 
 void FRLevelInfoLayer::fixMoreDifficultiesIncompatibility() {
-    if (auto existingCasualSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(this, "uproxide.more_difficulties/MD_Difficulty04.png")))
-        existingCasualSprite->removeFromParent();
-    if (auto existingToughSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(this, "uproxide.more_difficulties/MD_Difficulty07.png")))
-        existingToughSprite->removeFromParent();
-    if (auto existingCruelSprite = static_cast<CCSprite*>(FRUtilities::getChildBySpriteName(this, "uproxide.more_difficulties/MD_Difficulty09.png")))
-        existingCruelSprite->removeFromParent();
-
+    auto spriteName = std::string();
+    auto moreDifficultiesSprite = static_cast<CCSprite*>(getChildByID("uproxide.more_difficulties/more-difficulties-spr"));
+    if (moreDifficultiesSprite) {
+        moreDifficultiesSprite->setVisible(false);
+        spriteName = FRUtilities::getSpriteName(moreDifficultiesSprite);
+    }
     m_difficultySprite->setOpacity(255);
-    auto pos = CCPoint { m_difficultySprite->getPositionX() + 0.25f, m_difficultySprite->getPositionY() - 0.1f };
-    switch (m_fields->m_fakeRateData.stars) {
+
+    auto legacy = Loader::get()->getInstalledMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
+    auto pos = CCPoint { m_difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f), m_difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f) };
+    if (spriteName.compare("uproxide.more_difficulties/MD_DifficultyCP.png") == 0) {
+        moreDifficultiesSprite->setVisible(true);
+        m_difficultySprite->setOpacity(0);
+    }
+    else switch (m_fields->m_fakeRateData.stars) {
         case 4: {
-            auto casualSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty04.png");
-            casualSprite->setPosition(pos);
-            addChild(casualSprite, 3);
+            if (!moreDifficultiesSprite) {
+                moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
+                moreDifficultiesSprite->setPosition(pos);
+                moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
+                addChild(moreDifficultiesSprite, 3);
+            }
+            else {
+                moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
+                moreDifficultiesSprite->setVisible(true);
+            }
             m_difficultySprite->setOpacity(0);
             break;
         }
         case 7: {
-            auto toughSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty07.png");
-            toughSprite->setPosition(pos);
-            addChild(toughSprite, 3);
+            if (!moreDifficultiesSprite) {
+                moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
+                moreDifficultiesSprite->setPosition(pos);
+                moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
+                addChild(moreDifficultiesSprite, 3);
+            }
+            else {
+                moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
+                moreDifficultiesSprite->setVisible(true);
+            }
             m_difficultySprite->setOpacity(0);
             break;
         }
         case 9: {
-            auto cruelSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty09.png");
-            cruelSprite->setPosition(pos);
-            addChild(cruelSprite, 3);
+            if (!moreDifficultiesSprite) {
+                moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
+                moreDifficultiesSprite->setPosition(pos);
+                moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
+                addChild(moreDifficultiesSprite, 3);
+            }
+            else {
+                moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
+                moreDifficultiesSprite->setVisible(true);
+            }
             m_difficultySprite->setOpacity(0);
             break;
         }
@@ -198,19 +224,20 @@ bool FREditPopup::setup(GJGameLevel* level, int stars, int feature, int difficul
     m_mainLayer->addChild(m_difficultySprite);
 
     if (Loader::get()->isModInstalled("uproxide.more_difficulties")) {
-        auto pos = CCPoint { 100.25f, 84.9f };
+        auto legacy = Loader::get()->getInstalledMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
+        auto pos = CCPoint { legacy ? 100.0f : 100.25f, legacy ? 85.0f : 84.9f };
 
-        m_casualSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty04.png");
+        m_casualSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
         m_casualSprite->setPosition(pos);
         m_casualSprite->setVisible(false);
         m_mainLayer->addChild(m_casualSprite);
 
-        m_toughSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty07.png");
+        m_toughSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
         m_toughSprite->setPosition(pos);
         m_toughSprite->setVisible(false);
         m_mainLayer->addChild(m_toughSprite);
 
-        m_cruelSprite = CCSprite::create("uproxide.more_difficulties/MD_Difficulty09.png");
+        m_cruelSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
         m_cruelSprite->setPosition(pos);
         m_cruelSprite->setVisible(false);
         m_mainLayer->addChild(m_cruelSprite);
@@ -342,8 +369,7 @@ void FREditPopup::updateLabels() {
         m_casualSprite->setVisible(m_stars == 4);
         m_toughSprite->setVisible(m_stars == 7);
         m_cruelSprite->setVisible(m_stars == 9);
-        if (m_stars == 4 || m_stars == 7 || m_stars == 9) m_difficultySprite->setOpacity(0);
-        else m_difficultySprite->setOpacity(255);
+        m_difficultySprite->setOpacity(m_stars != 4 && m_stars != 7 && m_stars != 9 ? 255 : 0);
     }
 }
 

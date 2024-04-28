@@ -15,13 +15,6 @@ int FRUtilities::getBaseCurrency(int stars) {
     }
 }
 
-CCNode* FRUtilities::getChildBySpriteName(CCNode* parent, const char* name) {
-    for (auto child : CCArrayExt<CCNode*>(parent->getChildren())) {
-        if (isSpriteName(static_cast<CCNode*>(child), name)) return child;
-    }
-    return nullptr;
-}
-
 int FRUtilities::getDifficultyForStars(int stars) {
     switch (stars) {
         case 0: return 0;
@@ -48,20 +41,16 @@ int FRUtilities::getDifficultyFromLevel(GJGameLevel* level) {
     return difficulty;
 }
 
-bool FRUtilities::isSpriteName(CCNode* node, const char* name) {
-    if (!node) return false;
-
-    auto texture = CCTextureCache::sharedTextureCache()->textureForKey(name);
-    if (!texture) return false;
-
-    if (auto* spr = typeinfo_cast<CCSprite*>(node)) {
-        if (spr->getTexture() == texture) return true;
-    }
-    else if (auto* btn = typeinfo_cast<CCMenuItemSprite*>(node)) {
-        auto* img = btn->getNormalImage();
-        if (auto* spr = typeinfo_cast<CCSprite*>(img)) {
-            if (spr->getTexture() == texture) return true;
+std::string FRUtilities::getSpriteName(CCNode* node) {
+    if (auto spriteNode = typeinfo_cast<CCSprite*>(node)) {
+        if (auto texture = spriteNode->getTexture()) {
+            for (auto [key, frame] : CCDictionaryExt<std::string, CCSpriteFrame*>(CCSpriteFrameCache::sharedSpriteFrameCache()->m_pSpriteFrames)) {
+                if (frame->getTexture() == texture && frame->getRect() == spriteNode->getTextureRect()) return key;
+            }
+            for (auto [key, obj] : CCDictionaryExt<std::string, CCTexture2D*>(CCTextureCache::sharedTextureCache()->m_pTextures)) {
+                if (obj == texture) return key;
+            }
         }
     }
-    return false;
+    return "";
 }
