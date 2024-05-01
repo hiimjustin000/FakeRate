@@ -149,7 +149,6 @@ class $modify(FRLevelCell, LevelCell) {
             case 4: {
                 if (!moreDifficultiesSprite) {
                     moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
-                    moreDifficultiesSprite->setPosition(pos);
                     moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
                     difficultyContainer->addChild(moreDifficultiesSprite, 3);
                 }
@@ -157,13 +156,13 @@ class $modify(FRLevelCell, LevelCell) {
                     moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
                     moreDifficultiesSprite->setVisible(true);
                 }
+                moreDifficultiesSprite->setPosition(pos);
                 difficultySprite->setOpacity(0);
                 break;
             }
             case 7: {
                 if (!moreDifficultiesSprite) {
                     moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
-                    moreDifficultiesSprite->setPosition(pos);
                     moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
                     difficultyContainer->addChild(moreDifficultiesSprite, 3);
                 }
@@ -171,13 +170,13 @@ class $modify(FRLevelCell, LevelCell) {
                     moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
                     moreDifficultiesSprite->setVisible(true);
                 }
+                moreDifficultiesSprite->setPosition(pos);
                 difficultySprite->setOpacity(0);
                 break;
             }
             case 9: {
                 if (!moreDifficultiesSprite) {
                     moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
-                    moreDifficultiesSprite->setPosition(pos);
                     moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
                     difficultyContainer->addChild(moreDifficultiesSprite, 3);
                 }
@@ -185,6 +184,7 @@ class $modify(FRLevelCell, LevelCell) {
                     moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
                     moreDifficultiesSprite->setVisible(true);
                 }
+                moreDifficultiesSprite->setPosition(pos);
                 difficultySprite->setOpacity(0);
                 break;
             }
