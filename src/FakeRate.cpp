@@ -1,6 +1,6 @@
-#include "FRUtilities.hpp"
+#include "FakeRate.hpp"
 
-int FRUtilities::getBaseCurrency(int stars) {
+int FakeRate::getBaseCurrency(int stars) {
     switch (stars) {
         case 2: return 40;
         case 3: return 60;
@@ -15,7 +15,7 @@ int FRUtilities::getBaseCurrency(int stars) {
     }
 }
 
-int FRUtilities::getDifficultyForStars(int stars) {
+int FakeRate::getDifficultyForStars(int stars) {
     switch (stars) {
         case 0: return 0;
         case 1: return -1;
@@ -29,7 +29,7 @@ int FRUtilities::getDifficultyForStars(int stars) {
     }
 }
 
-int FRUtilities::getDifficultyFromLevel(GJGameLevel* level) {
+int FakeRate::getDifficultyFromLevel(GJGameLevel* level) {
     auto difficulty = level->getAverageDifficulty();
     if (level->m_demon > 0) switch (level->m_demonDifficulty) {
         case 3: difficulty = 7; break;
@@ -41,7 +41,7 @@ int FRUtilities::getDifficultyFromLevel(GJGameLevel* level) {
     return difficulty;
 }
 
-std::string FRUtilities::getSpriteName(CCNode* node) {
+std::string FakeRate::getSpriteName(CCNode* node) {
     if (auto spriteNode = typeinfo_cast<CCSprite*>(node)) {
         if (auto texture = spriteNode->getTexture()) {
             for (auto [key, frame] : CCDictionaryExt<std::string, CCSpriteFrame*>(CCSpriteFrameCache::sharedSpriteFrameCache()->m_pSpriteFrames)) {

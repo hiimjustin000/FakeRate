@@ -2,7 +2,7 @@
 
 using namespace geode::prelude;
 
-class FRUtilities {
+class FakeRate {
 public:
     static int getBaseCurrency(int);
     static int getDifficultyForStars(int);

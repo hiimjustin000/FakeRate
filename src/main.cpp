@@ -1,6 +1,6 @@
-#include <Geode/modify/LevelCell.hpp>
 #include "FREditPopup.hpp"
 
+#include <Geode/modify/LevelCell.hpp>
 class $modify(FRLevelCell, LevelCell) {
     static void onModify(auto& self) {
         (void)self.setHookPriority("LevelCell::loadFromLevel", -100);
@@ -108,7 +108,7 @@ class $modify(FRLevelCell, LevelCell) {
                         orbsLabel->setID("orbs-label");
                         m_mainLayer->addChild(orbsLabel);
                     }
-                    auto orbs = FRUtilities::getBaseCurrency(fakeRateData.stars);
+                    auto orbs = FakeRate::getBaseCurrency(fakeRateData.stars);
                     auto totalOrbs = (int)floorf(orbs * 1.25f);
                     log::info("{}", level->m_normalPercent.value());
                     orbsLabel->setString((level->m_normalPercent == 100 ?
@@ -134,7 +134,7 @@ class $modify(FRLevelCell, LevelCell) {
         auto moreDifficultiesSprite = static_cast<CCSprite*>(difficultyContainer->getChildByID("uproxide.more_difficulties/more-difficulties-spr"));
         if (moreDifficultiesSprite) {
             moreDifficultiesSprite->setVisible(false);
-            spriteName = FRUtilities::getSpriteName(moreDifficultiesSprite);
+            spriteName = FakeRate::getSpriteName(moreDifficultiesSprite);
         }
         auto difficultySprite = static_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
         difficultySprite->setOpacity(255);

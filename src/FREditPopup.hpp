@@ -1,6 +1,5 @@
 #include <vector>
-#include <Geode/modify/LevelInfoLayer.hpp>
-#include "FRUtilities.hpp"
+#include "FakeRate.hpp"
 
 struct FakeRateSaveData {
     int id;
@@ -9,6 +8,7 @@ struct FakeRateSaveData {
     int difficulty;
 };
 
+#include <Geode/modify/LevelInfoLayer.hpp>
 class FRLevelInfoLayerDummy; struct FRLevelInfoLayer : Modify<FRLevelInfoLayer, LevelInfoLayer> {
     struct Fields {
         FakeRateSaveData m_fakeRateData;

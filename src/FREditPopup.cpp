@@ -47,7 +47,7 @@ void FRLevelInfoLayer::checkFakeRate() {
         .id = m_level->m_levelID,
         .stars = m_level->m_stars,
         .feature = m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0,
-        .difficulty = FRUtilities::getDifficultyFromLevel(m_level)
+        .difficulty = FakeRate::getDifficultyFromLevel(m_level)
     };
 }
 
@@ -117,7 +117,7 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
     if (showStars) {
         m_orbsIcon->setPositionY(yPos - yOffset * 2.0f);
         m_orbsLabel->setPositionY(m_orbsIcon->getPositionY());
-        auto orbs = FRUtilities::getBaseCurrency(stars);
+        auto orbs = FakeRate::getBaseCurrency(stars);
         auto totalOrbs = (int)floorf(orbs * 1.25f);
         m_orbsLabel->setString(fmt::format("{}/{}", (int)floorf(m_level->m_normalPercent != 100 ? orbs * m_level->m_normalPercent / 100.0f : totalOrbs), totalOrbs).c_str());
         m_orbsLabel->limitLabelWidth(60.0f, 0.5f, 0.0f);
@@ -146,7 +146,7 @@ void FRLevelInfoLayer::fixMoreDifficultiesIncompatibility() {
     auto moreDifficultiesSprite = static_cast<CCSprite*>(getChildByID("uproxide.more_difficulties/more-difficulties-spr"));
     if (moreDifficultiesSprite) {
         moreDifficultiesSprite->setVisible(false);
-        spriteName = FRUtilities::getSpriteName(moreDifficultiesSprite);
+        spriteName = FakeRate::getSpriteName(moreDifficultiesSprite);
     }
     m_difficultySprite->setOpacity(255);
 
@@ -350,7 +350,7 @@ void FREditPopup::onFeatureRight(CCObject*) {
 }
 
 void FREditPopup::updateLabels() {
-    m_difficulty = m_stars >= 10 ? m_difficulty > 5 ? m_difficulty : 7 : FRUtilities::getDifficultyForStars(m_stars);
+    m_difficulty = m_stars >= 10 ? m_difficulty > 5 ? m_difficulty : 7 : FakeRate::getDifficultyForStars(m_stars);
     m_difficultySprite->updateDifficultyFrame(m_difficulty, (GJDifficultyName)1);
     m_difficultySprite->updateFeatureState((GJFeatureState)m_feature);
     m_difficultySprite->setPositionY(85.0f + (m_difficulty > 5 ? 5.0f : 0.0f));

@@ -1,11 +1,11 @@
 {
-    "geode": "2.0.0-beta.25",
+    "geode": "2.0.0-beta.26",
     "gd": {
         "android": "2.205",
         "win": "2.204",
         "mac": "2.200"
     },
-    "version": "v1.1.2",
+    "version": "v1.1.3",
     "id": "hiimjustin000.fake_rate",
     "name": "Fake Rate",
     "developer": "hiimjustin000",
@@ -18,7 +18,7 @@
             "importance": "required"
         }
     ],
-    "incompatibilies": [
+    "incompatibilities": [
         {
             "id": "uproxide.more_difficulties",
             "importance": "breaking",
