@@ -15,6 +15,10 @@ class $modify(FRLevelCell, LevelCell) {
             auto it = std::find_if(vec.begin(), vec.end(), [level](auto const& item) { return item.id == level->m_levelID; });
             if (it != vec.end()) {
                 auto difficultySprite = static_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
+                if (auto betweenDifficultySprite = static_cast<CCSprite*>(difficultyContainer->getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"))) {
+                    betweenDifficultySprite->setVisible(false);
+                    difficultySprite->setOpacity(255);
+                }
                 if (difficultyContainer->getID().compare("grd-demon-icon-layer") == 0) {
                     difficultyContainer->removeChildByTag(69420);
                     difficultySprite->setVisible(true);

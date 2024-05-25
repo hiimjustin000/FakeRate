@@ -52,11 +52,15 @@ void FRLevelInfoLayer::checkFakeRate() {
 
 void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bool update, bool coins) {
     m_fields->m_fakeRateData = { .id = m_level->m_levelID, .stars = stars, .feature = feature, .difficulty = difficulty };
+    if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between")) {
+        if (auto betweenDifficultySprite = static_cast<CCSprite*>(getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"))) {
+            betweenDifficultySprite->setVisible(false);
+            m_difficultySprite->setOpacity(255);
+        }
+    }
     if (Loader::get()->isModLoaded("itzkiba.grandpa_demon")) {
         removeChildByTag(69420);
-        for (auto child : CCArrayExt<CCNode*>(getChildren())) {
-            if (child->getID().compare("grd-difficulty") == 0) child->setVisible(false);
-        }
+        if (auto grdDifficulty = getChildByID("grd-difficulty")) grdDifficulty->setVisible(false);
         if (auto grdInfinity = getChildByID("grd-infinity")) grdInfinity->setVisible(false);
         m_difficultySprite->setVisible(true);
         if (auto featureGlow = m_difficultySprite->getChildByTag(69420))
