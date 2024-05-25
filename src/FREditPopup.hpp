@@ -21,7 +21,7 @@ class FRLevelInfoLayerDummy; struct FRLevelInfoLayer : Modify<FRLevelInfoLayer, 
     void checkFakeRate();
     void updateFakeRate(int, int, int, bool, bool);
     void onFakeRate(CCObject*);
-    void fixMoreDifficultiesIncompatibility();
+    void fixMoreDifficultiesIncompatibility(CCNode*);
 };
 
 class FREditPopup : public Popup<GJGameLevel*, int, int, int> {

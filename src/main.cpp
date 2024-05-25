@@ -27,8 +27,8 @@ class $modify(FRLevelCell, LevelCell) {
                         featureGlow->setPosition(difficultySprite->getContentWidth() * 0.5f, difficultySprite->getContentHeight() * 0.5f);
                 }
 
-                auto fakeRateData = *it;
-                difficultySprite->updateDifficultyFrame(fakeRateData.difficulty, (GJDifficultyName)0);
+                auto& fakeRateData = *it;
+                difficultySprite->updateDifficultyFrame(fakeRateData.difficulty, GJDifficultyName::Short);
                 difficultySprite->updateFeatureState((GJFeatureState)fakeRateData.feature);
                 auto addCoins = level->m_coins > 0 && !m_compactView;
                 auto showStars = fakeRateData.stars > 0 || level->m_dailyID > 0;
@@ -110,7 +110,6 @@ class $modify(FRLevelCell, LevelCell) {
                     }
                     auto orbs = FakeRate::getBaseCurrency(fakeRateData.stars);
                     auto totalOrbs = (int)floorf(orbs * 1.25f);
-                    log::info("{}", level->m_normalPercent.value());
                     orbsLabel->setString((level->m_normalPercent == 100 ?
                         fmt::format("{}", totalOrbs) :
                         fmt::format("{}/{}", (int)floorf(orbs * level->m_normalPercent / 100.0f), totalOrbs)).c_str());
@@ -139,7 +138,7 @@ class $modify(FRLevelCell, LevelCell) {
         auto difficultySprite = static_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
         difficultySprite->setOpacity(255);
 
-        auto legacy = Loader::get()->getInstalledMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
+        auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         auto pos = CCPoint { difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f), difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f) };
         if (spriteName.compare("uproxide.more_difficulties/MD_DifficultyCP.png") == 0) {
             moreDifficultiesSprite->setVisible(true);
