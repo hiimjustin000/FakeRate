@@ -19,7 +19,13 @@ class $modify(FRLevelCell, LevelCell) {
                     betweenDifficultySprite->setVisible(false);
                     difficultySprite->setOpacity(255);
                 }
-                if (difficultyContainer->getID().compare("grd-demon-icon-layer") == 0) {
+                auto gddpOverride = false;
+                if (auto gddpDifficultySprite = static_cast<CCSprite*>(difficultyContainer->getChildByID("gddp-difficulty"))) {
+                    gddpOverride = true;
+                    gddpDifficultySprite->setVisible(false);
+                    difficultySprite->setOpacity(255);
+                }
+                if (difficultyContainer->getID() == "grd-demon-icon-layer" && !gddpOverride) {
                     difficultyContainer->removeChildByTag(69420);
                     difficultySprite->setVisible(true);
                     if (auto grdInfinity = static_cast<CCSprite*>(difficultyContainer->getChildByID("grd-infinity"))) {
@@ -28,7 +34,7 @@ class $modify(FRLevelCell, LevelCell) {
                     }
                     else static_cast<CCSprite*>(difficultyContainer->getChildren()->lastObject())->setVisible(false);
                     if (auto featureGlow = difficultySprite->getChildByTag(69420))
-                        featureGlow->setPosition(difficultySprite->getContentWidth() * 0.5f, difficultySprite->getContentHeight() * 0.5f);
+                        featureGlow->setPosition(difficultySprite->getContentSize() * 0.5f);
                 }
 
                 auto& fakeRateData = *it;
@@ -144,7 +150,7 @@ class $modify(FRLevelCell, LevelCell) {
 
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         auto pos = CCPoint { difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f), difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f) };
-        if (spriteName.compare("uproxide.more_difficulties/MD_DifficultyCP.png") == 0) {
+        if (spriteName == "uproxide.more_difficulties/MD_DifficultyCP.png") {
             moreDifficultiesSprite->setVisible(true);
             difficultySprite->setOpacity(0);
         }

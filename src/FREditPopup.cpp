@@ -52,19 +52,25 @@ void FRLevelInfoLayer::checkFakeRate() {
 
 void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bool update, bool coins) {
     m_fields->m_fakeRateData = { .id = m_level->m_levelID, .stars = stars, .feature = feature, .difficulty = difficulty };
-    if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between")) {
-        if (auto betweenDifficultySprite = static_cast<CCSprite*>(getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"))) {
-            betweenDifficultySprite->setVisible(false);
-            m_difficultySprite->setOpacity(255);
-        }
+    if (auto betweenDifficultySprite = static_cast<CCSprite*>(getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"))) {
+        betweenDifficultySprite->setVisible(false);
+        m_difficultySprite->setOpacity(255);
     }
-    if (Loader::get()->isModLoaded("itzkiba.grandpa_demon")) {
+    auto gddpOverride = false;
+    if (auto gddpDifficultySprite = static_cast<CCSprite*>(getChildByID("gddp-difficulty"))) {
+        gddpOverride = true;
+        gddpDifficultySprite->setVisible(false);
+        m_difficultySprite->setOpacity(255);
+    }
+    if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && !gddpOverride) {
         removeChildByTag(69420);
         if (auto grdDifficulty = getChildByID("grd-difficulty")) grdDifficulty->setVisible(false);
-        if (auto grdInfinity = getChildByID("grd-infinity")) grdInfinity->setVisible(false);
+        for (auto child : CCArrayExt<CCNode*>(getChildren())) {
+            if (child->getID() == "grd-difficulty") child->setVisible(false);
+        }
         m_difficultySprite->setVisible(true);
         if (auto featureGlow = m_difficultySprite->getChildByTag(69420))
-            featureGlow->setPosition(m_difficultySprite->getContentWidth() * 0.5f, m_difficultySprite->getContentHeight() * 0.5f);
+            featureGlow->setPosition(m_difficultySprite->getContentSize() * 0.5f);
     }
     auto winSize = CCDirector::sharedDirector()->getWinSize();
     auto gsm = GameStatsManager::sharedState();
@@ -175,7 +181,7 @@ void FRLevelInfoLayer::fixMoreDifficultiesIncompatibility(CCNode* difficultySpri
         m_difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
         m_difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
     });
-    if (spriteName.compare("uproxide.more_difficulties/MD_DifficultyCP.png") == 0) {
+    if (spriteName == "uproxide.more_difficulties/MD_DifficultyCP.png") {
         moreDifficultiesSprite->setVisible(true);
         m_difficultySprite->setOpacity(0);
     }
