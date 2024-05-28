@@ -58,16 +58,16 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
     }
     auto gddpOverride = false;
     if (auto gddpDifficultySprite = static_cast<CCSprite*>(getChildByID("gddp-difficulty"))) {
-        gddpOverride = true;
+        gddpOverride = gddpDifficultySprite->isVisible();
         gddpDifficultySprite->setVisible(false);
         m_difficultySprite->setOpacity(255);
     }
     if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && !gddpOverride) {
         removeChildByTag(69420);
-        if (auto grdDifficulty = getChildByID("grd-difficulty")) grdDifficulty->setVisible(false);
         for (auto child : CCArrayExt<CCNode*>(getChildren())) {
             if (child->getID() == "grd-difficulty") child->setVisible(false);
         }
+        if (auto grdInfinity = getChildByID("grd-infinity")) grdInfinity->setVisible(false);
         m_difficultySprite->setVisible(true);
         if (auto featureGlow = m_difficultySprite->getChildByTag(69420))
             featureGlow->setPosition(m_difficultySprite->getContentSize() * 0.5f);
@@ -83,7 +83,9 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
         auto children = getChildren();
         for (int i = 0; i < children->count(); i++) {
             if (auto child = typeinfo_cast<CCMenu*>(children->objectAtIndex(i))) {
-                if (auto button = typeinfo_cast<CCMenuItemSpriteExtra*>(child->getChildren()->objectAtIndex(0))) {
+                auto grandchildren = child->getChildren();
+                if (!grandchildren || grandchildren->count() < 1) continue;
+                if (auto button = typeinfo_cast<CCMenuItemSpriteExtra*>(grandchildren->objectAtIndex(0))) {
                     if (button->getNormalImage() == m_difficultySprite) {
                         nodeToSetPosition = child;
                         difficultySpriteParent = button;
