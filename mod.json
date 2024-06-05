@@ -6,8 +6,8 @@
         "mac": "2.200"
     },
     "version": "v1.1.7",
-    "id": "hiimjustin000.fake_rate",
-    "name": "Fake Rate",
+    "id": "hiimjustin000.rate",
+    "name": "Rate",
     "developer": "hiimjustin000",
     "description": "Give online levels a fake rate.",
     "repository": "https://github.com/hiimjustin000/FakeRate",
