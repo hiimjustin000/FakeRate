@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.1.8 (2024-06-07)
+- Ported to Geometry Dash v2.206
+
 ## v1.1.7 (2024-05-27)
 - Fixed a few bugs with compatibilty with other mods
 

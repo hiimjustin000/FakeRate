@@ -1,5 +1,5 @@
 # Fake Rate
-Give online levels a fake rate.
+A mod that allows you to assign a fake rating to online levels.
 
 # Features
 - Ability to give online levels a fake rating

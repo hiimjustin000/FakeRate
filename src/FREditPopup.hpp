@@ -20,12 +20,12 @@ class FRLevelInfoLayerDummy; struct FRLevelInfoLayer : Modify<FRLevelInfoLayer, 
     void likedItem(LikeItemType, int, bool);
     void checkFakeRate();
     void updateFakeRate(int, int, int, bool, bool);
-    void onFakeRate(CCObject*);
     void fixMoreDifficultiesIncompatibility(CCNode*);
 };
 
-class FREditPopup : public Popup<GJGameLevel*, int, int, int> {
+class FREditPopup : public Popup<FRLevelInfoLayer*, GJGameLevel*, int, int, int> {
 protected:
+    FRLevelInfoLayer* m_delegate;
     GJGameLevel* m_level;
     int m_stars;
     int m_feature;
@@ -43,11 +43,10 @@ protected:
     CCMenuItemSpriteExtra* m_featureLeftArrow;
     CCMenuItemSpriteExtra* m_featureRightArrow;
 
-    bool setup(GJGameLevel*, int, int, int) override;
+    bool setup(FRLevelInfoLayer*, GJGameLevel*, int, int, int) override;
     void updateLabels();
 public:
-    FRLevelInfoLayer* m_delegate;
-    static FREditPopup* create(GJGameLevel*, int, int, int);
+    static FREditPopup* create(FRLevelInfoLayer*, GJGameLevel*, int, int, int);
 
     void onStarLeft(CCObject*);
     void onStarRight(CCObject*);

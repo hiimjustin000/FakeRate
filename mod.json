@@ -1,20 +1,20 @@
 {
-    "geode": "2.0.0-beta.27",
+    "geode": "3.0.0-alpha.1",
     "gd": {
-        "android": "2.205",
-        "win": "2.204",
-        "mac": "2.200"
+        "android": "2.206",
+        "win": "2.206",
+        "mac": "2.206"
     },
-    "version": "v1.1.7",
+    "version": "v1.1.8",
     "id": "hiimjustin000.fake_rate",
     "name": "Fake Rate",
     "developer": "hiimjustin000",
-    "description": "Give online levels a fake rate.",
+    "description": "A mod that allows you to assign a fake rating to online levels.",
     "repository": "https://github.com/hiimjustin000/FakeRate",
     "dependencies": [
         {
             "id": "geode.node-ids",
-            "version": ">=v1.9.1",
+            "version": ">=v1.12.0-beta.1",
             "importance": "required"
         }
     ],

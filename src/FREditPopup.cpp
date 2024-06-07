@@ -10,11 +10,13 @@ void FRLevelInfoLayer::onModify(auto& self) {
 bool FRLevelInfoLayer::init(GJGameLevel* level, bool challenge) {
     if (!LevelInfoLayer::init(level, challenge)) return false;
 
-    auto leftSideMenu = getChildByID("left-side-menu");
     auto buttonSprite = CircleButtonSprite::createWithSprite("FR_fakeRateBtn_001.png"_spr, 1.0f, CircleBaseColor::Green, CircleBaseSize::Medium);
     buttonSprite->getTopNode()->setScale(1.0f);
-    auto fakeRateButton = CCMenuItemSpriteExtra::create(buttonSprite, this, menu_selector(FRLevelInfoLayer::onFakeRate));
+    auto fakeRateButton = CCMenuItemExt::createSpriteExtra(buttonSprite, [this](auto) {
+        FREditPopup::create(this, m_level, m_fields->m_fakeRateData.stars, m_fields->m_fakeRateData.feature, m_fields->m_fakeRateData.difficulty)->show();
+    });
     fakeRateButton->setID("fake-rate-button"_spr);
+    auto leftSideMenu = getChildByID("left-side-menu");
     leftSideMenu->addChild(fakeRateButton);
     leftSideMenu->updateLayout();
 
@@ -64,8 +66,9 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
     }
     if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && !gddpOverride) {
         removeChildByTag(69420);
-        for (auto child : CCArrayExt<CCNode*>(getChildren())) {
-            if (child->getID() == "grd-difficulty") child->setVisible(false);
+        auto children = reinterpret_cast<CCNode**>(getChildren()->data->arr);
+        for (int i = 0; i < getChildrenCount(); i++) {
+            if (children[i]->getID() == "grd-difficulty") children[i]->setVisible(false);
         }
         if (auto grdInfinity = getChildByID("grd-infinity")) grdInfinity->setVisible(false);
         m_difficultySprite->setVisible(true);
@@ -158,17 +161,6 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(difficultySpriteParent);
 }
 
-void FRLevelInfoLayer::onFakeRate(CCObject*) {
-    auto popup = FREditPopup::create(
-        m_level,
-        m_fields->m_fakeRateData.stars,
-        m_fields->m_fakeRateData.feature,
-        m_fields->m_fakeRateData.difficulty
-    );
-    popup->m_delegate = this;
-    popup->show();
-}
-
 void FRLevelInfoLayer::fixMoreDifficultiesIncompatibility(CCNode* difficultySpriteParent) {
     auto spriteName = std::string();
     auto moreDifficultiesSprite = static_cast<CCSprite*>(getChildByID("uproxide.more_difficulties/more-difficulties-spr"));
@@ -233,9 +225,9 @@ void FRLevelInfoLayer::fixMoreDifficultiesIncompatibility(CCNode* difficultySpri
     }
 }
 
-FREditPopup* FREditPopup::create(GJGameLevel* level, int stars, int feature, int difficulty) {
+FREditPopup* FREditPopup::create(FRLevelInfoLayer* delegate, GJGameLevel* level, int stars, int feature, int difficulty) {
     auto ret = new FREditPopup();
-    if (ret && ret->initAnchored(200.0f, 150.0f, level, stars, feature, difficulty)) {
+    if (ret && ret->initAnchored(200.0f, 150.0f, delegate, level, stars, feature, difficulty)) {
         ret->autorelease();
         return ret;
     }
@@ -243,8 +235,9 @@ FREditPopup* FREditPopup::create(GJGameLevel* level, int stars, int feature, int
     return nullptr;
 }
 
-bool FREditPopup::setup(GJGameLevel* level, int stars, int feature, int difficulty) {
+bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int stars, int feature, int difficulty) {
     setTitle("Fake Rate");
+    m_delegate = delegate;
     m_level = level;
     m_stars = stars;
     m_feature = feature;
