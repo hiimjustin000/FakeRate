@@ -29,5 +29,11 @@
         "sprites": [
             "resources/*.png"
         ]
-    }
+    },
+    "tags": [
+        "customization",
+        "enhancement",
+        "interface",
+        "online"
+    ]
 }
