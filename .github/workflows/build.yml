@@ -55,3 +55,54 @@ jobs:
         with:
           name: Build Output
           path: ${{ steps.build.outputs.build-output }}
+  draft:
+    name: Draft Release
+    runs-on: ubuntu-latest
+    needs: ['package']
+
+    steps:
+      - name: Delete Existing Release
+        uses: actions/github-script@v7
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = process.env.GITHUB_REPOSITORY.split("/")[0];
+            const repo = process.env.GITHUB_REPOSITORY.split("/")[1];
+            const response = await github.rest.repos.listReleases({ owner, repo });
+            console.log("Checking for existing release...");
+            for (const release of response.data) {
+              if (release.tag_name == process.env.COMMIT_MESSAGE) {
+                console.log("Existing release found, deleting...");
+                await github.rest.repos.deleteRelease({ owner, repo, release_id: release.id });
+                await github.rest.git.updateRef({
+                  owner,
+                  repo,
+                  ref: `tags/${release.tag_name}`,
+                  sha: context.sha,
+                  force: true
+                });
+              }
+            }
+            console.log("Done.");
+
+      - name: Download Build Output
+        uses: actions/download-artifact@v4
+        with:
+          name: Build Output
+          path: build-output
+      
+      - name: Create Draft Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            build-output/*.geode
+            build-output/*.pdb
+          tag_name: ${{ github.event.head_commit.message }}
+          name: ${{ github.event.head_commit.message }}
+          draft: true
+          body: |
+            Replace with release notes
