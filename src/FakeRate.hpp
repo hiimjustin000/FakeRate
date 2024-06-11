@@ -7,5 +7,5 @@ public:
     static int getBaseCurrency(int);
     static int getDifficultyForStars(int);
     static int getDifficultyFromLevel(GJGameLevel*);
-    static std::string getSpriteName(CCNode*);
+    static std::string getSpriteName(CCSprite*);
 };

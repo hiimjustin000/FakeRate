@@ -1,3 +1,4 @@
+#include <Geode/utils/string.hpp>
 #include "FREditPopup.hpp"
 
 void FRLevelInfoLayer::onModify(auto& self) {
@@ -123,8 +124,8 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
         }
     }
     if (m_level->m_dailyID > 0 || m_level->m_gauntletLevel) {
-        auto diamondLabel = getChildOfType<CCLabelBMFont>(this, update ? 5 : m_level->m_dailyID > 0 ? 7 : 6);
-        auto diamondIcon = static_cast<CCSprite*>(getChildBySpriteFrameName(this, "diamond_small01_001.png"));
+        auto diamondLabel = static_cast<CCLabelBMFont*>(getChildByID("diamond-label"));
+        auto diamondIcon = getChildByID("diamond-icon");
         auto diamonds = stars > 1 ? stars + 2 : 0;
         diamondLabel->setString(fmt::format("{}/{}", (int)floorf(diamonds * m_level->m_normalPercent / 100.0f), diamonds).c_str());
         diamondIcon->setPosition({
@@ -142,7 +143,7 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
     m_likesLabel->setPositionY(m_likesIcon->getPositionY());
     auto lengthIcon = static_cast<CCSprite*>(m_icons->objectAtIndex(0));
     lengthIcon->setPositionY(yPos - yOffset);
-    m_lengthLabel->setPositionY(lengthIcon->getPositionY());
+    m_lengthLabel->setPositionY(lengthIcon->getPositionY() + (m_exactLengthLabel->isVisible() ? 6.0f : 0.0f));
     m_orbsIcon->setVisible(showStars);
     m_orbsLabel->setVisible(showStars);
     if (showStars) {
@@ -153,10 +154,7 @@ void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bo
         m_orbsLabel->setString(fmt::format("{}/{}", (int)floorf(m_level->m_normalPercent != 100 ? orbs * m_level->m_normalPercent / 100.0f : totalOrbs), totalOrbs).c_str());
         m_orbsLabel->limitLabelWidth(60.0f, 0.5f, 0.0f);
     }
-    if (auto exactTime = static_cast<CCLabelBMFont*>(getChildByID("cvolton.betterinfo/exact-time"))) {
-        exactTime->setPositionY(m_lengthLabel->getPositionY() - 2.0f);
-        m_lengthLabel->setPositionY(m_lengthLabel->getPositionY() + 6.0f);
-    }
+    if (m_exactLengthLabel->isVisible()) m_exactLengthLabel->setPositionY(m_lengthLabel->getPositionY() - 14.0f);
 
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(difficultySpriteParent);
 }
@@ -167,6 +165,21 @@ void FRLevelInfoLayer::fixMoreDifficultiesIncompatibility(CCNode* difficultySpri
     if (moreDifficultiesSprite) {
         moreDifficultiesSprite->setVisible(false);
         spriteName = FakeRate::getSpriteName(moreDifficultiesSprite);
+    } // thanks uproxide for making my life worse
+    else {
+        auto children = getChildren();
+        for (int i = 0; i < children->count(); i++) {
+            if (auto child = typeinfo_cast<CCSprite*>(children->objectAtIndex(i))) {
+                auto sprName = FakeRate::getSpriteName(child);
+                if (string::startsWith(sprName, "uproxide.more_difficulties/MD_Difficulty")) {
+                    moreDifficultiesSprite = child;
+                    moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
+                    moreDifficultiesSprite->setVisible(false);
+                    spriteName = sprName;
+                    break;
+                }
+            }
+        }
     }
     m_difficultySprite->setOpacity(255);
 
@@ -239,7 +252,7 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
     setTitle("Fake Rate");
     m_delegate = delegate;
     m_level = level;
-    m_stars = stars;
+    m_stars = stars < 1 ? 1 : stars;
     m_feature = feature;
     m_difficulty = difficulty;
 
@@ -249,7 +262,7 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
 
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
-        auto pos = CCPoint { legacy ? 100.0f : 100.25f, legacy ? 85.0f : 84.9f };
+        auto pos = CCPoint { legacy ? 100.0f, 85.0f : 100.25f, 84.9f };
 
         m_casualSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
         m_casualSprite->setPosition(pos);
@@ -278,99 +291,113 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
     auto starLeftSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
     starLeftSprite->setFlipX(true);
     starLeftSprite->setScale(0.2f);
-    m_starLeftArrow = CCMenuItemSpriteExtra::create(starLeftSprite, this, menu_selector(FREditPopup::onStarLeft));
+    m_starLeftArrow = CCMenuItemExt::createSpriteExtra(starLeftSprite, [this](auto) {
+        m_stars = (10 + ((m_stars - 2) % 10)) % 10 + 1;
+        updateLabels();
+    });
     m_buttonMenu->addChild(m_starLeftArrow);
 
     auto starRightSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
     starRightSprite->setScale(0.2f);
-    m_starRightArrow = CCMenuItemSpriteExtra::create(starRightSprite, this, menu_selector(FREditPopup::onStarRight));
+    m_starRightArrow = CCMenuItemExt::createSpriteExtra(starRightSprite, [this](auto) {
+        m_stars = m_stars % 10 + 1;
+        updateLabels();
+    });
     m_buttonMenu->addChild(m_starRightArrow);
 
     auto difficultyLeftSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
     difficultyLeftSprite->setFlipX(true);
     difficultyLeftSprite->setScale(0.3f);
-    m_difficultyLeftArrow = CCMenuItemSpriteExtra::create(difficultyLeftSprite, this, menu_selector(FREditPopup::onDifficultyLeft));
+    m_difficultyLeftArrow = CCMenuItemExt::createSpriteExtra(difficultyLeftSprite, [this](auto) {
+        if (m_difficulty == 6) m_difficulty = 8;
+        else if (m_difficulty == 7) m_difficulty = 10;
+        else if (m_difficulty == 9) m_difficulty = 6;
+        else m_difficulty--;
+        updateLabels();
+    });
     m_difficultyLeftArrow->setPosition(70.0f, 70.0f);
     m_buttonMenu->addChild(m_difficultyLeftArrow);
 
     auto difficultyRightSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
     difficultyRightSprite->setScale(0.3f);
-    m_difficultyRightArrow = CCMenuItemSpriteExtra::create(difficultyRightSprite, this, menu_selector(FREditPopup::onDifficultyRight));
+    m_difficultyRightArrow = CCMenuItemExt::createSpriteExtra(difficultyRightSprite, [this](auto) {
+        if (m_difficulty == 6) m_difficulty = 9;
+        else if (m_difficulty == 8) m_difficulty = 6;
+        else if (m_difficulty == 10) m_difficulty = 7;
+        else m_difficulty++;
+        updateLabels();
+    });
     m_difficultyRightArrow->setPosition(130.0f, 70.0f);
     m_buttonMenu->addChild(m_difficultyRightArrow);
 
     auto featureLeftSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
     featureLeftSprite->setFlipX(true);
     featureLeftSprite->setScale(0.4f);
-    m_featureLeftArrow = CCMenuItemSpriteExtra::create(featureLeftSprite, this, menu_selector(FREditPopup::onFeatureLeft));
+    m_featureLeftArrow = CCMenuItemExt::createSpriteExtra(featureLeftSprite, [this](auto) {
+        m_feature = (5 + ((m_feature - 1) % 5)) % 5;
+        updateLabels();
+    });
     m_featureLeftArrow->setPositionX(70.0f);
     m_buttonMenu->addChild(m_featureLeftArrow);
 
     auto featureRightSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
     featureRightSprite->setScale(0.4f);
-    m_featureRightArrow = CCMenuItemSpriteExtra::create(featureRightSprite, this, menu_selector(FREditPopup::onFeatureRight));
+    m_featureRightArrow = CCMenuItemExt::createSpriteExtra(featureRightSprite, [this](auto) {
+        m_feature = (m_feature + 1) % 5;
+        updateLabels();
+    });
     m_featureRightArrow->setPositionX(130.0f);
     m_buttonMenu->addChild(m_featureRightArrow);
 
-    auto addButton = CCMenuItemSpriteExtra::create(
-        ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png", 0.8f),
-        this,
-        menu_selector(FREditPopup::onAdd)
-    );
+    auto addButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this](auto) {
+        auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
+        auto it = std::find_if(vec.begin(), vec.end(), [this](auto const& item) {
+            return item.id == m_level->m_levelID;
+        });
+        if (it != vec.end()) {
+            it->stars = m_stars;
+            it->feature = m_feature;
+            it->difficulty = m_difficulty;
+        }
+        else {
+            vec.push_back({
+                .id = m_level->m_levelID,
+                .stars = m_stars,
+                .feature = m_feature,
+                .difficulty = m_difficulty
+            });
+        }
+        Mod::get()->setSavedValue("fake-rate", vec);
+        m_delegate->updateFakeRate(m_stars, m_feature, m_difficulty, true, true);
+        onClose(nullptr);
+    });
     addButton->setPosition(50.0f, 25.0f);
     m_buttonMenu->addChild(addButton);
 
-    auto removeButton = CCMenuItemSpriteExtra::create(
-        ButtonSprite::create("Remove", "goldFont.fnt", "GJ_button_06.png", 0.8f),
-        this,
-        menu_selector(FREditPopup::onRemove)
-    );
+    auto removeButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Remove", "goldFont.fnt", "GJ_button_06.png", 0.8f), [this](auto) {
+        auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
+        if (vec.empty()) return;
+        vec.erase(std::remove_if(vec.begin(), vec.end(), [this](auto const& item) {
+            return item.id == m_level->m_levelID;
+        }), vec.end());
+        Mod::get()->setSavedValue("fake-rate", vec);
+        auto difficulty = m_level->getAverageDifficulty();
+        if (m_level->m_demon > 0) switch (m_level->m_demonDifficulty) {
+            case 3: difficulty = 7; break;
+            case 4: difficulty = 8; break;
+            case 5: difficulty = 9; break;
+            case 6: difficulty = 10; break;
+            default: difficulty = 6; break;
+        }
+        m_delegate->updateFakeRate(m_level->m_stars, m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0, FakeRate::getDifficultyFromLevel(m_level), true, false);
+        onClose(nullptr);
+    });
     removeButton->setPosition(135.0f, 25.0f);
     m_buttonMenu->addChild(removeButton);
 
     updateLabels();
 
     return true;
-}
-
-void FREditPopup::onStarLeft(CCObject*) {
-    m_stars--;
-    if (m_stars < 1) m_stars = 10;
-    updateLabels();
-}
-
-void FREditPopup::onStarRight(CCObject*) {
-    m_stars++;
-    if (m_stars > 10) m_stars = 1;
-    updateLabels();
-}
-
-void FREditPopup::onDifficultyLeft(CCObject*) {
-    if (m_difficulty == 6) m_difficulty = 8;
-    else if (m_difficulty == 7) m_difficulty = 10;
-    else if (m_difficulty == 9) m_difficulty = 6;
-    else m_difficulty--;
-    updateLabels();
-}
-
-void FREditPopup::onDifficultyRight(CCObject*) {
-    if (m_difficulty == 6) m_difficulty = 9;
-    else if (m_difficulty == 8) m_difficulty = 6;
-    else if (m_difficulty == 10) m_difficulty = 7;
-    else m_difficulty++;
-    updateLabels();
-}
-
-void FREditPopup::onFeatureLeft(CCObject*) {
-    m_feature--;
-    if (m_feature < 0) m_feature = 4;
-    updateLabels();
-}
-
-void FREditPopup::onFeatureRight(CCObject*) {
-    m_feature++;
-    if (m_feature > 4) m_feature = 0;
-    updateLabels();
 }
 
 void FREditPopup::updateLabels() {
@@ -395,46 +422,4 @@ void FREditPopup::updateLabels() {
         m_cruelSprite->setVisible(m_stars == 9);
         m_difficultySprite->setOpacity(m_stars != 4 && m_stars != 7 && m_stars != 9 ? 255 : 0);
     }
-}
-
-void FREditPopup::onAdd(CCObject*) {
-    auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
-    auto it = std::find_if(vec.begin(), vec.end(), [this](auto const& item) {
-        return item.id == m_level->m_levelID;
-    });
-    if (it != vec.end()) {
-        it->stars = m_stars;
-        it->feature = m_feature;
-        it->difficulty = m_difficulty;
-    }
-    else {
-        vec.push_back({
-            .id = m_level->m_levelID,
-            .stars = m_stars,
-            .feature = m_feature,
-            .difficulty = m_difficulty
-        });
-    }
-    Mod::get()->setSavedValue("fake-rate", vec);
-    m_delegate->updateFakeRate(m_stars, m_feature, m_difficulty, true, true);
-    onClose(nullptr);
-}
-
-void FREditPopup::onRemove(CCObject*) {
-    auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
-    if (vec.empty()) return;
-    vec.erase(std::remove_if(vec.begin(), vec.end(), [this](auto const& item) {
-        return item.id == m_level->m_levelID;
-    }), vec.end());
-    Mod::get()->setSavedValue("fake-rate", vec);
-    auto difficulty = m_level->getAverageDifficulty();
-    if (m_level->m_demon > 0) switch (m_level->m_demonDifficulty) {
-        case 3: difficulty = 7; break;
-        case 4: difficulty = 8; break;
-        case 5: difficulty = 9; break;
-        case 6: difficulty = 10; break;
-        default: difficulty = 6; break;
-    }
-    m_delegate->updateFakeRate(m_level->m_stars, m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0, difficulty, true, false);
-    onClose(nullptr);
 }

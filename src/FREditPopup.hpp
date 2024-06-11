@@ -47,15 +47,6 @@ protected:
     void updateLabels();
 public:
     static FREditPopup* create(FRLevelInfoLayer*, GJGameLevel*, int, int, int);
-
-    void onStarLeft(CCObject*);
-    void onStarRight(CCObject*);
-    void onDifficultyLeft(CCObject*);
-    void onDifficultyRight(CCObject*);
-    void onFeatureLeft(CCObject*);
-    void onFeatureRight(CCObject*);
-    void onAdd(CCObject*);
-    void onRemove(CCObject*);
 };
 
 template<>

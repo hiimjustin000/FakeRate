@@ -1,4 +1,8 @@
 # Fake Rate Changelog
+## v1.1.9-beta.2 (2024-06-11)
+- Fixed incompatibility with the mod "More Difficulties" by uproxide (Again like seriously how many times do I have to fix this)
+- Fixed estimated time label not positioning correctly
+
 ## v1.1.9-beta.1 (2024-06-08)
 - Fixed a few things
 

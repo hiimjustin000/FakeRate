@@ -30,26 +30,18 @@ int FakeRate::getDifficultyForStars(int stars) {
 }
 
 int FakeRate::getDifficultyFromLevel(GJGameLevel* level) {
-    auto difficulty = level->getAverageDifficulty();
-    if (level->m_demon > 0) switch (level->m_demonDifficulty) {
-        case 3: difficulty = 7; break;
-        case 4: difficulty = 8; break;
-        case 5: difficulty = 9; break;
-        case 6: difficulty = 10; break;
-        default: difficulty = 6; break;
-    }
-    return difficulty;
+    if (level->m_demon > 0) return level->m_demonDifficulty > 0 ? level->m_demonDifficulty + 4 : 6;
+    else if (level->m_ratings < 5) return 0;
+    else return level->m_ratingsSum / level->m_ratings;
 }
 
-std::string FakeRate::getSpriteName(CCNode* node) {
-    if (auto spriteNode = typeinfo_cast<CCSprite*>(node)) {
-        if (auto texture = spriteNode->getTexture()) {
-            for (auto [key, frame] : CCDictionaryExt<std::string, CCSpriteFrame*>(CCSpriteFrameCache::sharedSpriteFrameCache()->m_pSpriteFrames)) {
-                if (frame->getTexture() == texture && frame->getRect() == spriteNode->getTextureRect()) return key;
-            }
-            for (auto [key, obj] : CCDictionaryExt<std::string, CCTexture2D*>(CCTextureCache::sharedTextureCache()->m_pTextures)) {
-                if (obj == texture) return key;
-            }
+std::string FakeRate::getSpriteName(CCSprite* sprite) {
+    if (auto texture = sprite->getTexture()) {
+        for (auto [key, frame] : CCDictionaryExt<std::string, CCSpriteFrame*>(CCSpriteFrameCache::sharedSpriteFrameCache()->m_pSpriteFrames)) {
+            if (frame->getTexture() == texture && frame->getRect() == sprite->getTextureRect()) return key;
+        }
+        for (auto [key, obj] : CCDictionaryExt<std::string, CCTexture2D*>(CCTextureCache::sharedTextureCache()->m_pTextures)) {
+            if (obj == texture) return key;
         }
     }
     return "";
