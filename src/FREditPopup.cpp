@@ -262,7 +262,7 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
 
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
-        auto pos = CCPoint { legacy ? 100.0f, 85.0f : 100.25f, 84.9f };
+        auto pos = legacy ? CCPoint { 100.0f, 85.0f } : CCPoint { 100.25f, 84.9f };
 
         m_casualSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
         m_casualSprite->setPosition(pos);
@@ -381,14 +381,6 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
             return item.id == m_level->m_levelID;
         }), vec.end());
         Mod::get()->setSavedValue("fake-rate", vec);
-        auto difficulty = m_level->getAverageDifficulty();
-        if (m_level->m_demon > 0) switch (m_level->m_demonDifficulty) {
-            case 3: difficulty = 7; break;
-            case 4: difficulty = 8; break;
-            case 5: difficulty = 9; break;
-            case 6: difficulty = 10; break;
-            default: difficulty = 6; break;
-        }
         m_delegate->updateFakeRate(m_level->m_stars, m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0, FakeRate::getDifficultyFromLevel(m_level), true, false);
         onClose(nullptr);
     });
