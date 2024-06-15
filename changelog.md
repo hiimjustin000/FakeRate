@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.1.9 (2024-06-14)
+- Finalized the release of v1.1.9
+
 ## v1.1.9-beta.3 (2024-06-12)
 - Fixed a slight alignment issue in the fake rate popup
 
