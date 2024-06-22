@@ -1,4 +1,8 @@
 # Fake Rate Changelog
+## v1.2.0 (2024-06-22)
+- Revamped the fake rate popup
+- Allowed independent customization of difficulty, stars, and featured status
+
 ## v1.1.9 (2024-06-14)
 - Finalized the release of v1.1.9
 
