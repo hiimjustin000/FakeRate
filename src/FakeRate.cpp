@@ -2,6 +2,7 @@
 
 int FakeRate::getBaseCurrency(int stars) {
     switch (stars) {
+        case 0: case 1: return 0;
         case 2: return 40;
         case 3: return 60;
         case 4: return 100;
@@ -10,22 +11,7 @@ int FakeRate::getBaseCurrency(int stars) {
         case 7: return 220;
         case 8: return 280;
         case 9: return 340;
-        case 10: return 400;
-        default: return 0;
-    }
-}
-
-int FakeRate::getDifficultyForStars(int stars) {
-    switch (stars) {
-        case 0: return 0;
-        case 1: return -1;
-        case 2: return 1;
-        case 3: return 2;
-        case 4: case 5: return 3;
-        case 6: case 7: return 4;
-        case 8: case 9: return 5;
-        case 10: return 6;
-        default: return 0;
+        default: return 400;
     }
 }
 
@@ -45,4 +31,17 @@ std::string FakeRate::getSpriteName(CCSprite* sprite) {
         }
     }
     return "";
+}
+
+void FakeRate::toggle(CCNode* node, bool enabled) {
+    if (auto sprite = typeinfo_cast<CCSprite*>(node)) {
+        sprite->setColor(enabled ? ccColor3B { 255, 255, 255 } : ccColor3B { 125, 125, 125 });
+
+        if (sprite->getChildren()) {
+            auto children = sprite->getChildren();
+            for (auto i = 0; i < children->count(); i++) {
+                if (auto child = typeinfo_cast<CCSprite*>(children->objectAtIndex(i))) child->setColor(enabled ? ccColor3B { 255, 255, 255 } : ccColor3B { 125, 125, 125 });
+            }
+        }
+    }
 }

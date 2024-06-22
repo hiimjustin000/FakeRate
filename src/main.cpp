@@ -1,4 +1,4 @@
-#include "FREditPopup.hpp"
+#include "FakeRate.hpp"
 
 #include <Geode/modify/LevelCell.hpp>
 class $modify(FRLevelCell, LevelCell) {
@@ -76,8 +76,7 @@ class $modify(FRLevelCell, LevelCell) {
                         auto coinStr = fmt::format("{}_{}", level->m_levelID.value(), i);
                         if (level->m_dailyID > 0) coinStr += "_" + std::to_string(level->m_dailyID);
                         else if (level->m_gauntletLevel) coinStr += "_g";
-                        if (gsm->hasUserCoin(coinStr.c_str()) || gsm->hasPendingUserCoin(coinStr.c_str())) coin->setColor({ 255, 255, 255 });
-                        else coin->setColor({ 165, 165, 165 });
+                        coin->setColor(gsm->hasUserCoin(coinStr.c_str()) || gsm->hasPendingUserCoin(coinStr.c_str()) ? ccColor3B { 255, 255, 255 } : ccColor3B { 165, 165, 165 });
                     }
                 }
 
@@ -150,53 +149,29 @@ class $modify(FRLevelCell, LevelCell) {
 
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         auto pos = CCPoint { difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f), difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f) };
+        auto frameName = "";
+        auto stars = fakeRateData.stars;
         if (spriteName == "uproxide.more_difficulties/MD_DifficultyCP.png") {
             moreDifficultiesSprite->setVisible(true);
             difficultySprite->setOpacity(0);
         }
-        else switch (fakeRateData.stars) {
-            case 4: {
-                if (!moreDifficultiesSprite) {
-                    moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
-                    moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
-                    difficultyContainer->addChild(moreDifficultiesSprite, 3);
-                }
-                else {
-                    moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
-                    moreDifficultiesSprite->setVisible(true);
-                }
-                moreDifficultiesSprite->setPosition(pos);
-                difficultySprite->setOpacity(0);
-                break;
+        else if (fakeRateData.moreDifficultiesOverride > 0) {
+            switch (fakeRateData.moreDifficultiesOverride) {
+                case 4: frameName = legacy ? "uproxide.more_difficulties/MD_Difficulty04_Legacy.png" : "uproxide.more_difficulties/MD_Difficulty04.png"; break;
+                case 7: frameName = legacy ? "uproxide.more_difficulties/MD_Difficulty07_Legacy.png" : "uproxide.more_difficulties/MD_Difficulty07.png"; break;
+                case 9: frameName = legacy ? "uproxide.more_difficulties/MD_Difficulty09_Legacy.png" : "uproxide.more_difficulties/MD_Difficulty09.png"; break;
             }
-            case 7: {
-                if (!moreDifficultiesSprite) {
-                    moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
-                    moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
-                    difficultyContainer->addChild(moreDifficultiesSprite, 3);
-                }
-                else {
-                    moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
-                    moreDifficultiesSprite->setVisible(true);
-                }
-                moreDifficultiesSprite->setPosition(pos);
-                difficultySprite->setOpacity(0);
-                break;
+            if (!moreDifficultiesSprite) {
+                moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(frameName);
+                moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
+                addChild(moreDifficultiesSprite, 3);
             }
-            case 9: {
-                if (!moreDifficultiesSprite) {
-                    moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
-                    moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
-                    difficultyContainer->addChild(moreDifficultiesSprite, 3);
-                }
-                else {
-                    moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
-                    moreDifficultiesSprite->setVisible(true);
-                }
-                moreDifficultiesSprite->setPosition(pos);
-                difficultySprite->setOpacity(0);
-                break;
+            else {
+                moreDifficultiesSprite->initWithSpriteFrameName(frameName);
+                moreDifficultiesSprite->setVisible(true);
             }
+            moreDifficultiesSprite->setPosition(pos);
+            difficultySprite->setOpacity(0);
         }
     }
 };

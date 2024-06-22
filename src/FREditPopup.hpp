@@ -1,83 +1,55 @@
-#include <vector>
-#include "FakeRate.hpp"
+#include "FRLevelInfoLayer.hpp"
 
-struct FakeRateSaveData {
-    int id;
-    int stars;
-    int feature;
-    int difficulty;
-};
-
-#include <Geode/modify/LevelInfoLayer.hpp>
-class FRLevelInfoLayerDummy; struct FRLevelInfoLayer : Modify<FRLevelInfoLayer, LevelInfoLayer> {
-    struct Fields {
-        FakeRateSaveData m_fakeRateData;
-    };
-    static void onModify(auto& self);
-    bool init(GJGameLevel*, bool);
-    void levelDownloadFinished(GJGameLevel*);
-    void levelUpdateFinished(GJGameLevel*, UpdateResponse);
-    void likedItem(LikeItemType, int, bool);
-    void checkFakeRate();
-    void updateFakeRate(int, int, int, bool, bool);
-    void fixMoreDifficultiesIncompatibility(CCNode*);
-};
-
-class FREditPopup : public Popup<FRLevelInfoLayer*, GJGameLevel*, int, int, int> {
+class FREditPopup : public Popup<FRLevelInfoLayer*, GJGameLevel*, int, int, int, int>, SetIDPopupDelegate {
 protected:
     FRLevelInfoLayer* m_delegate;
     GJGameLevel* m_level;
     int m_stars;
     int m_feature;
     int m_difficulty;
+    int m_moreDifficultiesOverride;
+    bool m_legacy;
     GJDifficultySprite* m_difficultySprite;
     CCSprite* m_casualSprite;
     CCSprite* m_toughSprite;
     CCSprite* m_cruelSprite;
     CCSprite* m_starSprite;
     CCLabelBMFont* m_starsLabel;
-    CCMenuItemSpriteExtra* m_starLeftArrow;
-    CCMenuItemSpriteExtra* m_starRightArrow;
-    CCMenuItemSpriteExtra* m_difficultyLeftArrow;
-    CCMenuItemSpriteExtra* m_difficultyRightArrow;
-    CCMenuItemSpriteExtra* m_featureLeftArrow;
-    CCMenuItemSpriteExtra* m_featureRightArrow;
+    CCArray* m_coins;
 
-    bool setup(FRLevelInfoLayer*, GJGameLevel*, int, int, int) override;
+    bool setup(FRLevelInfoLayer*, GJGameLevel*, int, int, int, int) override;
     void updateLabels();
 public:
-    static FREditPopup* create(FRLevelInfoLayer*, GJGameLevel*, int, int, int);
+    static FREditPopup* create(FRLevelInfoLayer*, GJGameLevel*, int, int, int, int);
+
+    void setIDPopupClosed(SetIDPopup*, int) override;
+
+    ~FREditPopup() override;
 };
 
-template<>
-struct matjson::Serialize<std::vector<FakeRateSaveData>> {
-    static std::vector<FakeRateSaveData> from_json(matjson::Value const& value) {
-        auto vec = std::vector<FakeRateSaveData>{};
-        for (auto const& item : value.as_array()) {
-            vec.push_back({
-                .id = item["id"].as_int(),
-                .stars = item["stars"].as_int(),
-                .feature = item["feature"].as_int(),
-                .difficulty = item["difficulty"].as_int()
-            });
-        }
-        return vec;
-    }
+class FRSetDifficultyPopup : public Popup<int, int, bool, MiniFunction<void(int, int)>> {
+protected:
+    int m_difficulty;
+    int m_moreDifficultiesOverride;
+    bool m_legacy;
+    CCMenuItemSpriteExtra* m_selected;
 
-    static matjson::Value to_json(std::vector<FakeRateSaveData> const& vec) {
-        auto arr = matjson::Array{};
-        for (auto const& item : vec) {
-            arr.push_back(matjson::Object {
-                { "id", item.id },
-                { "stars", item.stars },
-                { "feature", item.feature },
-                { "difficulty", item.difficulty }
-            });
-        }
-        return arr;
-    }
+    bool setup(int, int, bool, MiniFunction<void(int, int)>) override;
+    void createDifficultyToggle(CCMenu*, int, int);
+public:
+    static FRSetDifficultyPopup* create(int, int, bool, MiniFunction<void(int, int)>);
+};
 
-    static bool is_json(matjson::Value const& value) {
-        return value.is_array();
-    }
+class FRSetFeaturePopup : public Popup<int, int, int, bool, MiniFunction<void(int)>> {
+protected:
+    GJFeatureState m_feature;
+    int m_difficulty;
+    int m_moreDifficultiesOverride;
+    bool m_legacy;
+    CCMenuItemSpriteExtra* m_selected;
+
+    bool setup(int, int, int, bool, MiniFunction<void(int)>) override;
+    void createFeatureToggle(CCMenu*, GJFeatureState);
+public:
+    static FRSetFeaturePopup* create(int, int, int, bool, MiniFunction<void(int)>);
 };

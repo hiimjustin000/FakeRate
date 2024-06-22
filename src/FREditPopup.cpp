@@ -1,246 +1,8 @@
-#include <Geode/utils/string.hpp>
 #include "FREditPopup.hpp"
 
-void FRLevelInfoLayer::onModify(auto& self) {
-    (void)self.setHookPriority("LevelInfoLayer::init", -100);
-    (void)self.setHookPriority("LevelInfoLayer::levelDownloadFinished", -100);
-    (void)self.setHookPriority("LevelInfoLayer::levelUpdateFinished", -100);
-    (void)self.setHookPriority("LevelInfoLayer::likedItem", -100);
-}
-
-bool FRLevelInfoLayer::init(GJGameLevel* level, bool challenge) {
-    if (!LevelInfoLayer::init(level, challenge)) return false;
-
-    auto buttonSprite = CircleButtonSprite::createWithSprite("FR_fakeRateBtn_001.png"_spr, 1.0f, CircleBaseColor::Green, CircleBaseSize::Medium);
-    buttonSprite->getTopNode()->setScale(1.0f);
-    auto fakeRateButton = CCMenuItemExt::createSpriteExtra(buttonSprite, [this](auto) {
-        FREditPopup::create(this, m_level, m_fields->m_fakeRateData.stars, m_fields->m_fakeRateData.feature, m_fields->m_fakeRateData.difficulty)->show();
-    });
-    fakeRateButton->setID("fake-rate-button"_spr);
-    auto leftSideMenu = getChildByID("left-side-menu");
-    leftSideMenu->addChild(fakeRateButton);
-    leftSideMenu->updateLayout();
-
-    checkFakeRate();
-
-    return true;
-}
-
-void FRLevelInfoLayer::levelDownloadFinished(GJGameLevel* level) {
-    LevelInfoLayer::levelDownloadFinished(level);
-    checkFakeRate();
-}
-
-void FRLevelInfoLayer::levelUpdateFinished(GJGameLevel* level, UpdateResponse response) {
-    LevelInfoLayer::levelUpdateFinished(level, response);
-    checkFakeRate();
-}
-
-void FRLevelInfoLayer::likedItem(LikeItemType type, int id, bool liked) {
-    LevelInfoLayer::likedItem(type, id, liked);
-    checkFakeRate();
-}
-
-void FRLevelInfoLayer::checkFakeRate() {
-    auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
-    auto it = std::find_if(vec.begin(), vec.end(), [this](auto const& item) { return item.id == m_level->m_levelID; });
-    if (it != vec.end()) updateFakeRate(it->stars, it->feature, it->difficulty, false, true);
-    else m_fields->m_fakeRateData = {
-        .id = m_level->m_levelID,
-        .stars = m_level->m_stars,
-        .feature = m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0,
-        .difficulty = FakeRate::getDifficultyFromLevel(m_level)
-    };
-}
-
-void FRLevelInfoLayer::updateFakeRate(int stars, int feature, int difficulty, bool update, bool coins) {
-    m_fields->m_fakeRateData = { .id = m_level->m_levelID, .stars = stars, .feature = feature, .difficulty = difficulty };
-    if (auto betweenDifficultySprite = static_cast<CCSprite*>(getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"))) {
-        betweenDifficultySprite->setVisible(false);
-        m_difficultySprite->setOpacity(255);
-    }
-    auto gddpOverride = false;
-    if (auto gddpDifficultySprite = static_cast<CCSprite*>(getChildByID("gddp-difficulty"))) {
-        gddpOverride = gddpDifficultySprite->isVisible();
-        gddpDifficultySprite->setVisible(false);
-        m_difficultySprite->setOpacity(255);
-    }
-    if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && !gddpOverride) {
-        removeChildByTag(69420);
-        auto children = reinterpret_cast<CCNode**>(getChildren()->data->arr);
-        for (int i = 0; i < getChildrenCount(); i++) {
-            if (children[i]->getID() == "grd-difficulty") children[i]->setVisible(false);
-        }
-        if (auto grdInfinity = getChildByID("grd-infinity")) grdInfinity->setVisible(false);
-        m_difficultySprite->setVisible(true);
-        if (auto featureGlow = m_difficultySprite->getChildByTag(69420))
-            featureGlow->setPosition(m_difficultySprite->getContentSize() * 0.5f);
-    }
-    auto winSize = CCDirector::sharedDirector()->getWinSize();
-    auto gsm = GameStatsManager::sharedState();
-    auto showStars = stars > 0 || m_level->m_dailyID > 0 || m_level->m_gauntletLevel;
-    m_difficultySprite->updateDifficultyFrame(difficulty, GJDifficultyName::Long);
-    m_difficultySprite->updateFeatureState((GJFeatureState)feature);
-    CCNode* nodeToSetPosition = m_difficultySprite;
-    CCNode* difficultySpriteParent = m_difficultySprite->getParent();
-    if (Loader::get()->isModLoaded("acaruso.horn")) {
-        auto children = getChildren();
-        for (int i = 0; i < children->count(); i++) {
-            if (auto child = typeinfo_cast<CCMenu*>(children->objectAtIndex(i))) {
-                auto grandchildren = child->getChildren();
-                if (!grandchildren || grandchildren->count() < 1) continue;
-                if (auto button = typeinfo_cast<CCMenuItemSpriteExtra*>(grandchildren->objectAtIndex(0))) {
-                    if (button->getNormalImage() == m_difficultySprite) {
-                        nodeToSetPosition = child;
-                        difficultySpriteParent = button;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    nodeToSetPosition->setPositionY(winSize.height / 2 + 56.0f + (difficulty > 5 ? 5.0f : 0.0f) + (showStars ? 10.0f : 0.0f));
-    auto& position = nodeToSetPosition->getPosition();
-    m_starsIcon->setPosition({ position.x + 8.0f, position.y - 30.0f - (difficulty > 5 ? 9.0f : 0.0f) });
-    m_starsIcon->setVisible(showStars);
-    m_starsLabel->setPosition(m_starsIcon->getPositionX() - 8.0f, m_starsIcon->getPositionY());
-    m_starsLabel->setString(std::to_string(stars).c_str());
-    m_starsLabel->setVisible(showStars);
-    m_starsLabel->setColor({ 255, 255, (unsigned char)(gsm->hasCompletedLevel(m_level) ? 50 : 255) });
-    for (int i = 0; i < m_coins->count(); i++) {
-        auto coin = static_cast<CCSprite*>(m_coins->objectAtIndex(i));
-        coin->setPositionY(position.y - 31.5f - (showStars ? 14.0f : 0.0f)
-            - (m_level->m_gauntletLevel || m_level->m_dailyID > 0 ? 14.5f : 0.0f) - (difficulty > 5 ? 9.0f : 0.0f));
-        auto coinStr = fmt::format("{}_{}", m_level->m_levelID.value(), i + 1);
-        if (m_level->m_dailyID > 0) coinStr += "_" + std::to_string(m_level->m_dailyID);
-        else if (m_level->m_gauntletLevel) coinStr += "_g";
-        if (coins || m_level->m_coinsVerified == 1) {
-            if (gsm->hasUserCoin(coinStr.c_str()) || gsm->hasPendingUserCoin(coinStr.c_str())) coin->setColor({ 255, 255, 255 });
-            else coin->setColor({ 165, 165, 165 });
-        }
-        else {
-            if (gsm->hasUserCoin(coinStr.c_str()) || gsm->hasPendingUserCoin(coinStr.c_str())) coin->setColor({ 255, 175, 75 });
-            else coin->setColor({ 165, 113, 48 });
-        }
-    }
-    if (m_level->m_dailyID > 0 || m_level->m_gauntletLevel) {
-        auto diamondLabel = static_cast<CCLabelBMFont*>(getChildByID("diamond-label"));
-        auto diamondIcon = getChildByID("diamond-icon");
-        auto diamonds = stars > 1 ? stars + 2 : 0;
-        diamondLabel->setString(fmt::format("{}/{}", (int)floorf(diamonds * m_level->m_normalPercent / 100.0f), diamonds).c_str());
-        diamondIcon->setPosition({
-            position.x + diamondLabel->getScaledContentSize().width * 0.5f + 2.0f,
-            position.y - (difficulty > 5 ? 9.0f : 0.0f) - 44.5f
-        });
-        diamondLabel->setPosition({ diamondIcon->getPositionX() - 8.0f, diamondIcon->getPositionY() });
-    }
-    auto yPos = winSize.height / 2 + 51.0f + (showStars ? 10.0f : 0.0f);
-    auto yOffset = showStars ? 28.0f : 30.0f;
-    auto downloadsIcon = static_cast<CCSprite*>(m_icons->objectAtIndex(1));
-    downloadsIcon->setPositionY(yPos + yOffset);
-    m_downloadsLabel->setPositionY(downloadsIcon->getPositionY());
-    m_likesIcon->setPositionY(yPos + 1.0f);
-    m_likesLabel->setPositionY(m_likesIcon->getPositionY());
-    auto lengthIcon = static_cast<CCSprite*>(m_icons->objectAtIndex(0));
-    lengthIcon->setPositionY(yPos - yOffset);
-    m_lengthLabel->setPositionY(lengthIcon->getPositionY() + (m_exactLengthLabel->isVisible() ? 6.0f : 0.0f));
-    m_orbsIcon->setVisible(showStars);
-    m_orbsLabel->setVisible(showStars);
-    if (showStars) {
-        m_orbsIcon->setPositionY(yPos - yOffset * 2.0f);
-        m_orbsLabel->setPositionY(m_orbsIcon->getPositionY());
-        auto orbs = FakeRate::getBaseCurrency(stars);
-        auto totalOrbs = (int)floorf(orbs * 1.25f);
-        m_orbsLabel->setString(fmt::format("{}/{}", (int)floorf(m_level->m_normalPercent != 100 ? orbs * m_level->m_normalPercent / 100.0f : totalOrbs), totalOrbs).c_str());
-        m_orbsLabel->limitLabelWidth(60.0f, 0.5f, 0.0f);
-    }
-    if (m_exactLengthLabel->isVisible()) m_exactLengthLabel->setPositionY(m_lengthLabel->getPositionY() - 14.0f);
-
-    if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(difficultySpriteParent);
-}
-
-void FRLevelInfoLayer::fixMoreDifficultiesIncompatibility(CCNode* difficultySpriteParent) {
-    auto spriteName = std::string();
-    auto moreDifficultiesSprite = static_cast<CCSprite*>(getChildByID("uproxide.more_difficulties/more-difficulties-spr"));
-    if (moreDifficultiesSprite) {
-        moreDifficultiesSprite->setVisible(false);
-        spriteName = FakeRate::getSpriteName(moreDifficultiesSprite);
-    } // thanks uproxide for making my life worse
-    else {
-        auto children = getChildren();
-        for (int i = 0; i < children->count(); i++) {
-            if (auto child = typeinfo_cast<CCSprite*>(children->objectAtIndex(i))) {
-                auto sprName = FakeRate::getSpriteName(child);
-                if (string::startsWith(sprName, "uproxide.more_difficulties/MD_Difficulty")) {
-                    moreDifficultiesSprite = child;
-                    moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
-                    moreDifficultiesSprite->setVisible(false);
-                    spriteName = sprName;
-                    break;
-                }
-            }
-        }
-    }
-    m_difficultySprite->setOpacity(255);
-
-    auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
-    auto pos = difficultySpriteParent->convertToWorldSpace({
-        m_difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
-        m_difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
-    });
-    if (spriteName == "uproxide.more_difficulties/MD_DifficultyCP.png") {
-        moreDifficultiesSprite->setVisible(true);
-        m_difficultySprite->setOpacity(0);
-    }
-    else switch (m_fields->m_fakeRateData.stars) {
-        case 4: {
-            if (!moreDifficultiesSprite) {
-                moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
-                moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
-                addChild(moreDifficultiesSprite, 3);
-            }
-            else {
-                moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
-                moreDifficultiesSprite->setVisible(true);
-            }
-            moreDifficultiesSprite->setPosition(pos);
-            m_difficultySprite->setOpacity(0);
-            break;
-        }
-        case 7: {
-            if (!moreDifficultiesSprite) {
-                moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
-                moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
-                addChild(moreDifficultiesSprite, 3);
-            }
-            else {
-                moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
-                moreDifficultiesSprite->setVisible(true);
-            }
-            moreDifficultiesSprite->setPosition(pos);
-            m_difficultySprite->setOpacity(0);
-            break;
-        }
-        case 9: {
-            if (!moreDifficultiesSprite) {
-                moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
-                moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
-                addChild(moreDifficultiesSprite, 3);
-            }
-            else {
-                moreDifficultiesSprite->initWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
-                moreDifficultiesSprite->setVisible(true);
-            }
-            moreDifficultiesSprite->setPosition(pos);
-            m_difficultySprite->setOpacity(0);
-            break;
-        }
-    }
-}
-
-FREditPopup* FREditPopup::create(FRLevelInfoLayer* delegate, GJGameLevel* level, int stars, int feature, int difficulty) {
+FREditPopup* FREditPopup::create(FRLevelInfoLayer* delegate, GJGameLevel* level, int stars, int feature, int difficulty, int mdo) {
     auto ret = new FREditPopup();
-    if (ret && ret->initAnchored(200.0f, 150.0f, delegate, level, stars, feature, difficulty)) {
+    if (ret && ret->initAnchored(300.0f, 200.0f, delegate, level, stars, feature, difficulty, mdo)) {
         ret->autorelease();
         return ret;
     }
@@ -248,33 +10,35 @@ FREditPopup* FREditPopup::create(FRLevelInfoLayer* delegate, GJGameLevel* level,
     return nullptr;
 }
 
-bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int stars, int feature, int difficulty) {
+bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int stars, int feature, int difficulty, int mdo) {
     setTitle("Fake Rate");
     m_delegate = delegate;
     m_level = level;
-    m_stars = stars < 1 ? 1 : stars;
+    m_stars = stars;
     m_feature = feature;
     m_difficulty = difficulty;
+    m_moreDifficultiesOverride = mdo;
+    m_legacy = false;
 
     m_difficultySprite = GJDifficultySprite::create(difficulty, GJDifficultyName::Long);
-    m_difficultySprite->setPositionX(100.0f);
+    m_difficultySprite->setPositionX(60.0f);
     m_mainLayer->addChild(m_difficultySprite);
 
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
-        auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
-        auto pos = legacy ? CCPoint { 100.0f, 85.0f } : CCPoint { 100.25f, 84.9f };
+        m_legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
+        auto pos = m_legacy ? CCPoint { 60.0f, 100.0f } : CCPoint { 60.25f, 99.9f };
 
-        m_casualSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacy ? "_Legacy" : "").c_str());
+        m_casualSprite = CCSprite::createWithSpriteFrameName(m_legacy ? "uproxide.more_difficulties/MD_Difficulty04_Legacy.png" : "uproxide.more_difficulties/MD_Difficulty04.png");
         m_casualSprite->setPosition(pos);
         m_casualSprite->setVisible(false);
         m_mainLayer->addChild(m_casualSprite);
 
-        m_toughSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacy ? "_Legacy" : "").c_str());
+        m_toughSprite = CCSprite::createWithSpriteFrameName(m_legacy ? "uproxide.more_difficulties/MD_Difficulty07_Legacy.png" : "uproxide.more_difficulties/MD_Difficulty07.png");
         m_toughSprite->setPosition(pos);
         m_toughSprite->setVisible(false);
         m_mainLayer->addChild(m_toughSprite);
 
-        m_cruelSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacy ? "_Legacy" : "").c_str());
+        m_cruelSprite = CCSprite::createWithSpriteFrameName(m_legacy ? "uproxide.more_difficulties/MD_Difficulty09_Legacy.png" : "uproxide.more_difficulties/MD_Difficulty09.png");
         m_cruelSprite->setPosition(pos);
         m_cruelSprite->setVisible(false);
         m_mainLayer->addChild(m_cruelSprite);
@@ -288,66 +52,43 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
     m_starsLabel->setAnchorPoint({ 1.0f, 0.5f });
     m_mainLayer->addChild(m_starsLabel);
 
-    auto starLeftSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
-    starLeftSprite->setFlipX(true);
-    starLeftSprite->setScale(0.2f);
-    m_starLeftArrow = CCMenuItemExt::createSpriteExtra(starLeftSprite, [this](auto) {
-        m_stars = (10 + ((m_stars - 2) % 10)) % 10 + 1;
-        updateLabels();
-    });
-    m_buttonMenu->addChild(m_starLeftArrow);
+    m_coins = CCArray::create();
+    m_coins->retain();
 
-    auto starRightSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
-    starRightSprite->setScale(0.2f);
-    m_starRightArrow = CCMenuItemExt::createSpriteExtra(starRightSprite, [this](auto) {
-        m_stars = m_stars % 10 + 1;
-        updateLabels();
-    });
-    m_buttonMenu->addChild(m_starRightArrow);
+    for (int i = 0; i < m_level->m_coins; i++) {
+        auto coin = CCSprite::createWithSpriteFrameName("usercoin_small01_001.png");
+        coin->setPositionX(60.0f +
+            (i == 2 ? 10.0f : i == 1 && m_level->m_coins == 2 ? 5.0f : i == 0 && m_level->m_coins == 2 ? -5.0f : i == 0 && m_level->m_coins == 3 ? -10.0f : 0.0f));
+        m_mainLayer->addChild(coin);
+        m_coins->addObject(coin);
+    }
 
-    auto difficultyLeftSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
-    difficultyLeftSprite->setFlipX(true);
-    difficultyLeftSprite->setScale(0.3f);
-    m_difficultyLeftArrow = CCMenuItemExt::createSpriteExtra(difficultyLeftSprite, [this](auto) {
-        if (m_difficulty == 6) m_difficulty = 8;
-        else if (m_difficulty == 7) m_difficulty = 10;
-        else if (m_difficulty == 9) m_difficulty = 6;
-        else m_difficulty--;
-        updateLabels();
+    auto difficultyButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Difficulty", "goldFont.fnt", "GJ_button_02.png", 0.8f), [this](auto) {
+        FRSetDifficultyPopup::create(m_difficulty, m_moreDifficultiesOverride, m_legacy, [this](int difficulty, int mdo) {
+            m_difficulty = difficulty;
+            m_moreDifficultiesOverride = mdo;
+            updateLabels();
+        })->show();
     });
-    m_difficultyLeftArrow->setPosition(70.0f, 70.0f);
-    m_buttonMenu->addChild(m_difficultyLeftArrow);
+    difficultyButton->setPosition(200.0f, 150.0f);
+    m_buttonMenu->addChild(difficultyButton);
 
-    auto difficultyRightSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
-    difficultyRightSprite->setScale(0.3f);
-    m_difficultyRightArrow = CCMenuItemExt::createSpriteExtra(difficultyRightSprite, [this](auto) {
-        if (m_difficulty == 6) m_difficulty = 9;
-        else if (m_difficulty == 8) m_difficulty = 6;
-        else if (m_difficulty == 10) m_difficulty = 7;
-        else m_difficulty++;
-        updateLabels();
+    auto starsButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Stars", "goldFont.fnt", "GJ_button_02.png", 0.8f), [this, stars](auto) {
+        auto popup = SetIDPopup::create(m_stars, 0, 127, "Set Stars", "Set", true, stars, 60.0f, false, false);
+        popup->m_delegate = this;
+        popup->show();
     });
-    m_difficultyRightArrow->setPosition(130.0f, 70.0f);
-    m_buttonMenu->addChild(m_difficultyRightArrow);
+    starsButton->setPosition(200.0f, 110.0f);
+    m_buttonMenu->addChild(starsButton);
 
-    auto featureLeftSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
-    featureLeftSprite->setFlipX(true);
-    featureLeftSprite->setScale(0.4f);
-    m_featureLeftArrow = CCMenuItemExt::createSpriteExtra(featureLeftSprite, [this](auto) {
-        m_feature = (5 + ((m_feature - 1) % 5)) % 5;
-        updateLabels();
+    auto featureButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Feature", "goldFont.fnt", "GJ_button_02.png", 0.8f), [this](auto) {
+        FRSetFeaturePopup::create(m_feature, m_difficulty, m_moreDifficultiesOverride, m_legacy, [this](int feature) {
+            m_feature = feature;
+            updateLabels();
+        })->show();
     });
-    m_featureLeftArrow->setPositionX(70.0f);
-    m_buttonMenu->addChild(m_featureLeftArrow);
-
-    auto featureRightSprite = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
-    featureRightSprite->setScale(0.4f);
-    m_featureRightArrow = CCMenuItemExt::createSpriteExtra(featureRightSprite, [this](auto) {
-        m_feature = (m_feature + 1) % 5;
-        updateLabels();
-    });
-    m_featureRightArrow->setPositionX(130.0f);
-    m_buttonMenu->addChild(m_featureRightArrow);
+    featureButton->setPosition(200.0f, 70.0f);
+    m_buttonMenu->addChild(featureButton);
 
     auto addButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this](auto) {
         auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
@@ -358,20 +99,22 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
             it->stars = m_stars;
             it->feature = m_feature;
             it->difficulty = m_difficulty;
+            it->moreDifficultiesOverride = m_moreDifficultiesOverride;
         }
         else {
             vec.push_back({
                 .id = m_level->m_levelID,
                 .stars = m_stars,
                 .feature = m_feature,
-                .difficulty = m_difficulty
+                .difficulty = m_difficulty,
+                .moreDifficultiesOverride = m_moreDifficultiesOverride
             });
         }
         Mod::get()->setSavedValue("fake-rate", vec);
-        m_delegate->updateFakeRate(m_stars, m_feature, m_difficulty, true, true);
+        m_delegate->updateFakeRate(m_stars, m_feature, m_difficulty, m_moreDifficultiesOverride, true, true);
         onClose(nullptr);
     });
-    addButton->setPosition(50.0f, 25.0f);
+    addButton->setPosition(150.0f, 30.0f);
     m_buttonMenu->addChild(addButton);
 
     auto removeButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Remove", "goldFont.fnt", "GJ_button_06.png", 0.8f), [this](auto) {
@@ -381,10 +124,12 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
             return item.id == m_level->m_levelID;
         }), vec.end());
         Mod::get()->setSavedValue("fake-rate", vec);
-        m_delegate->updateFakeRate(m_level->m_stars, m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0, FakeRate::getDifficultyFromLevel(m_level), true, false);
+        auto stars = m_level->m_stars;
+        m_delegate->updateFakeRate(m_level->m_stars, m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0, FakeRate::getDifficultyFromLevel(m_level),
+            stars == 4 || stars == 7 || stars == 9 ? stars : 0, true, false);
         onClose(nullptr);
     });
-    removeButton->setPosition(135.0f, 25.0f);
+    removeButton->setPosition(235.0f, 30.0f);
     m_buttonMenu->addChild(removeButton);
 
     updateLabels();
@@ -392,26 +137,184 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
     return true;
 }
 
+void FREditPopup::setIDPopupClosed(SetIDPopup*, int stars) {
+    m_stars = stars;
+    updateLabels();
+}
+
 void FREditPopup::updateLabels() {
-    m_difficulty = m_stars >= 10 ? m_difficulty > 5 ? m_difficulty : 7 : FakeRate::getDifficultyForStars(m_stars);
     m_difficultySprite->updateDifficultyFrame(m_difficulty, GJDifficultyName::Long);
     m_difficultySprite->updateFeatureState((GJFeatureState)m_feature);
-    m_difficultySprite->setPositionY(85.0f + (m_difficulty > 5 ? 5.0f : 0.0f));
+    m_difficultySprite->setPositionY(100.0f + (m_difficulty > 5 ? 5.0f : 0.0f) + (m_stars > 0 ? 10.0f : 0.0f));
     m_starSprite->setPosition({ m_difficultySprite->getPositionX() + 8.0f, m_difficultySprite->getPositionY() - 30.0f - (m_difficulty > 5 ? 9.0f : 0.0f) });
+    m_starSprite->setVisible(m_stars > 0);
     m_starsLabel->setPosition(m_starSprite->getPositionX() - 8.0f, m_starSprite->getPositionY());
     m_starsLabel->setString(std::to_string(m_stars).c_str());
-    m_starLeftArrow->setPosition(m_starsLabel->getPositionX() - 20.0f, m_starsLabel->getPositionY());
-    m_starRightArrow->setPosition(m_starSprite->getPositionX() + 12.0f, m_starSprite->getPositionY());
-    m_difficultyLeftArrow->setVisible(m_difficulty > 5);
-    m_difficultyLeftArrow->setEnabled(m_difficulty > 5);
-    m_difficultyRightArrow->setVisible(m_difficulty > 5);
-    m_difficultyRightArrow->setEnabled(m_difficulty > 5);
-    m_featureLeftArrow->setPositionY(m_difficultySprite->getPositionY() + 5.0f);
-    m_featureRightArrow->setPositionY(m_difficultySprite->getPositionY() + 5.0f);
-    if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
-        m_casualSprite->setVisible(m_stars == 4);
-        m_toughSprite->setVisible(m_stars == 7);
-        m_cruelSprite->setVisible(m_stars == 9);
-        m_difficultySprite->setOpacity(m_stars != 4 && m_stars != 7 && m_stars != 9 ? 255 : 0);
+    m_starsLabel->setVisible(m_stars > 0);
+    auto coins = reinterpret_cast<CCSprite**>(m_coins->data->arr);
+    for (int i = 0; i < m_level->m_coins; i++) {
+        coins[i]->setPositionY(m_difficultySprite->getPositionY() - 31.5f - (m_stars > 0 ? 14.0f : 0.0f) - (m_difficulty > 5 ? 9.0f : 0.0f));
     }
+    if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
+        auto pos = m_difficultySprite->getPosition() + (m_legacy ? CCPoint { 0.0f, 0.0f } : CCPoint { 0.25f, -0.1f });
+        m_casualSprite->setPosition(pos);
+        m_toughSprite->setPosition(pos);
+        m_cruelSprite->setPosition(pos);
+        m_casualSprite->setVisible(m_moreDifficultiesOverride == 4);
+        m_toughSprite->setVisible(m_moreDifficultiesOverride == 7);
+        m_cruelSprite->setVisible(m_moreDifficultiesOverride == 9);
+        m_difficultySprite->setOpacity(m_moreDifficultiesOverride != 4 && m_moreDifficultiesOverride != 7 && m_moreDifficultiesOverride != 9 ? 255 : 0);
+    }
+}
+
+FREditPopup::~FREditPopup() {
+    m_coins->release();
+}
+
+FRSetDifficultyPopup* FRSetDifficultyPopup::create(int difficulty, int moreDifficultiesOverride, bool legacy, MiniFunction<void(int, int)> callback) {
+    auto ret = new FRSetDifficultyPopup();
+    if (ret && ret->initAnchored(300.0f, 250.0f, difficulty, moreDifficultiesOverride, legacy, callback)) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
+}
+
+bool FRSetDifficultyPopup::setup(int difficulty, int moreDifficultiesOverride, bool legacy, MiniFunction<void(int, int)> callback) {
+    setTitle("Set Difficulty");
+    m_difficulty = difficulty;
+    m_moreDifficultiesOverride = moreDifficultiesOverride;
+    m_legacy = legacy;
+    
+    auto menuRow1 = CCMenu::create();
+    menuRow1->setLayout(RowLayout::create()->setGap(20.0f));
+    menuRow1->setPosition(150.0f, 185.0f);
+    menuRow1->setContentSize({ 300.0f, 45.0f });
+    m_mainLayer->addChild(menuRow1);
+
+    auto menuRow2 = CCMenu::create();
+    menuRow2->setLayout(RowLayout::create()->setGap(20.0f));
+    menuRow2->setPosition(150.0f, 135.0f);
+    menuRow2->setContentSize({ 300.0f, 45.0f });
+    m_mainLayer->addChild(menuRow2);
+
+    auto menuRow3 = CCMenu::create();
+    menuRow3->setLayout(RowLayout::create()->setGap(20.0f));
+    menuRow3->setPosition(150.0f, 80.0f);
+    menuRow3->setContentSize({ 300.0f, 65.0f });
+    m_mainLayer->addChild(menuRow3);
+
+    createDifficultyToggle(menuRow1, 0, 0);
+    createDifficultyToggle(menuRow1, -1, 0);
+    createDifficultyToggle(menuRow1, 1, 0);
+    createDifficultyToggle(menuRow1, 2, 0);
+    createDifficultyToggle(menuRow1, 3, 4);
+    menuRow1->updateLayout();
+
+    createDifficultyToggle(menuRow2, 3, 0);
+    createDifficultyToggle(menuRow2, 4, 0);
+    createDifficultyToggle(menuRow2, 4, 7);
+    createDifficultyToggle(menuRow2, 5, 0);
+    createDifficultyToggle(menuRow2, 5, 9);
+    menuRow2->updateLayout();
+
+    createDifficultyToggle(menuRow3, 7, 0);
+    createDifficultyToggle(menuRow3, 8, 0);
+    createDifficultyToggle(menuRow3, 6, 0);
+    createDifficultyToggle(menuRow3, 9, 0);
+    createDifficultyToggle(menuRow3, 10, 0);
+    menuRow3->updateLayout();
+
+    auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
+        callback(m_difficulty, m_moreDifficultiesOverride);
+        onClose(nullptr);
+    });
+    confirmButton->setPosition(150.0f, 30.0f);
+    m_buttonMenu->addChild(confirmButton);
+
+    return true;
+}
+
+void FRSetDifficultyPopup::createDifficultyToggle(CCMenu* menu, int difficulty, int moreDifficultiesOverride) {
+    auto num = difficulty == -1 ? "auto" : fmt::format("{:02d}", difficulty);
+    auto frameName = difficulty > 5 ? fmt::format("difficulty_{}_btn2_001.png", num) : fmt::format("difficulty_{}_btn_001.png", num);
+    if (Loader::get()->isModLoaded("uproxide.more_difficulties") && moreDifficultiesOverride > 0)
+        frameName = m_legacy ? fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}_Legacy.png", moreDifficultiesOverride)
+            : fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}.png", moreDifficultiesOverride);
+    else if (moreDifficultiesOverride > 0) return;
+    auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(frameName.c_str(), 1.0f, [this, difficulty, moreDifficultiesOverride](auto sender) {
+        m_difficulty = difficulty;
+        m_moreDifficultiesOverride = moreDifficultiesOverride;
+        FakeRate::toggle(m_selected->getNormalImage(), false);
+        FakeRate::toggle(sender->getNormalImage(), true);
+        m_selected = sender;
+    });
+    FakeRate::toggle(toggle->getNormalImage(), difficulty == m_difficulty && moreDifficultiesOverride == m_moreDifficultiesOverride);
+    m_selected = difficulty == m_difficulty && moreDifficultiesOverride == m_moreDifficultiesOverride ? toggle : m_selected;
+    menu->addChild(toggle);
+}
+
+FRSetFeaturePopup* FRSetFeaturePopup::create(int feature, int difficulty, int moreDifficultiesOverride, bool legacy, MiniFunction<void(int)> callback) {
+    auto ret = new FRSetFeaturePopup();
+    if (ret && ret->initAnchored(300.0f, 150.0f, feature, difficulty, moreDifficultiesOverride, legacy, callback)) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
+}
+
+bool FRSetFeaturePopup::setup(int feature, int difficulty, int moreDifficultiesOverride, bool legacy, MiniFunction<void(int)> callback) {
+    setTitle("Set Feature");
+    m_feature = static_cast<GJFeatureState>(feature);
+    m_difficulty = difficulty;
+    m_moreDifficultiesOverride = moreDifficultiesOverride;
+    m_legacy = legacy;
+
+    auto menuRow = CCMenu::create();
+    menuRow->setLayout(RowLayout::create()->setGap(25.0f));
+    menuRow->setPosition(150.0f, 75.0f);
+    menuRow->setContentSize({ 300.0f, 50.0f });
+    m_mainLayer->addChild(menuRow);
+
+    createFeatureToggle(menuRow, GJFeatureState::None);
+    createFeatureToggle(menuRow, GJFeatureState::Featured);
+    createFeatureToggle(menuRow, GJFeatureState::Epic);
+    createFeatureToggle(menuRow, GJFeatureState::Legendary);
+    createFeatureToggle(menuRow, GJFeatureState::Mythic);
+    menuRow->updateLayout();
+    
+    auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
+        callback(static_cast<int>(m_feature));
+        onClose(nullptr);
+    });
+    confirmButton->setPosition(150.0f, 30.0f);
+    m_buttonMenu->addChild(confirmButton);
+
+    return true;
+}
+
+void FRSetFeaturePopup::createFeatureToggle(CCMenu* menu, GJFeatureState feature) {
+    auto difficultySprite = GJDifficultySprite::create(m_difficulty, GJDifficultyName::Long);
+    difficultySprite->updateFeatureState(feature);
+    if (Loader::get()->isModLoaded("uproxide.more_difficulties") && m_moreDifficultiesOverride > 0) {
+        auto mdSprite = CCSprite::createWithSpriteFrameName((m_legacy ? fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}_Legacy.png", m_moreDifficultiesOverride)
+            : fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}.png", m_moreDifficultiesOverride)).c_str());
+        difficultySprite->addChild(mdSprite);
+        mdSprite->setPosition(difficultySprite->getContentSize() / 2 + (m_legacy ? CCPoint { 0.0f, 0.0f } : CCPoint { 0.25f, -0.1f }));
+        difficultySprite->setOpacity(0);
+    }
+    auto toggle = CCMenuItemExt::createSpriteExtra(difficultySprite, [this, feature](auto sender) {
+        m_feature = feature;
+        FakeRate::toggle(m_selected->getNormalImage(), false);
+        if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(m_selected->getNormalImage(), 0)) particleSystem->setVisible(false);
+        FakeRate::toggle(sender->getNormalImage(), true);
+        if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(sender->getNormalImage(), 0)) particleSystem->setVisible(true);
+        m_selected = sender;
+    });
+    FakeRate::toggle(difficultySprite, feature == m_feature);
+    if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(difficultySprite, 0)) particleSystem->setVisible(feature == m_feature);
+    m_selected = feature == m_feature ? toggle : m_selected;
+    menu->addChild(toggle);
 }
