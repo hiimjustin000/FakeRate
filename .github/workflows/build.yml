@@ -53,6 +53,7 @@ jobs:
         with:
           name: Build Output
           path: ${{ steps.build.outputs.build-output }}
+
   draft:
     name: Draft Release
     runs-on: ubuntu-latest
@@ -102,5 +103,3 @@ jobs:
           tag_name: ${{ github.event.head_commit.message }}
           name: ${{ github.event.head_commit.message }}
           draft: true
-          body: |
-            Replace with release notes

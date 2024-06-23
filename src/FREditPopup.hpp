@@ -1,8 +1,11 @@
-#include "FRLevelInfoLayer.hpp"
+#include "FakeRate.hpp"
 
-class FREditPopup : public Popup<FRLevelInfoLayer*, GJGameLevel*, int, int, int, int>, SetIDPopupDelegate {
+typedef MiniFunction<void(int, int, int, int, bool, bool)> UpdateFakeRateCallback;
+typedef MiniFunction<void(int, int)> SetDifficultyCallback;
+typedef MiniFunction<void(int)> SetFeatureCallback;
+
+class FREditPopup : public Popup<GJGameLevel*, int, int, int, int, UpdateFakeRateCallback>, SetIDPopupDelegate {
 protected:
-    FRLevelInfoLayer* m_delegate;
     GJGameLevel* m_level;
     int m_stars;
     int m_feature;
@@ -17,30 +20,30 @@ protected:
     CCLabelBMFont* m_starsLabel;
     CCArray* m_coins;
 
-    bool setup(FRLevelInfoLayer*, GJGameLevel*, int, int, int, int) override;
+    bool setup(GJGameLevel*, int, int, int, int, UpdateFakeRateCallback) override;
     void updateLabels();
 public:
-    static FREditPopup* create(FRLevelInfoLayer*, GJGameLevel*, int, int, int, int);
+    static FREditPopup* create(GJGameLevel*, int, int, int, int, UpdateFakeRateCallback);
 
     void setIDPopupClosed(SetIDPopup*, int) override;
 
     ~FREditPopup() override;
 };
 
-class FRSetDifficultyPopup : public Popup<int, int, bool, MiniFunction<void(int, int)>> {
+class FRSetDifficultyPopup : public Popup<int, int, bool, SetDifficultyCallback> {
 protected:
     int m_difficulty;
     int m_moreDifficultiesOverride;
     bool m_legacy;
     CCMenuItemSpriteExtra* m_selected;
 
-    bool setup(int, int, bool, MiniFunction<void(int, int)>) override;
+    bool setup(int, int, bool, SetDifficultyCallback) override;
     void createDifficultyToggle(CCMenu*, int, int);
 public:
-    static FRSetDifficultyPopup* create(int, int, bool, MiniFunction<void(int, int)>);
+    static FRSetDifficultyPopup* create(int, int, bool, SetDifficultyCallback);
 };
 
-class FRSetFeaturePopup : public Popup<int, int, int, bool, MiniFunction<void(int)>> {
+class FRSetFeaturePopup : public Popup<int, int, int, bool, SetFeatureCallback> {
 protected:
     GJFeatureState m_feature;
     int m_difficulty;
@@ -48,8 +51,8 @@ protected:
     bool m_legacy;
     CCMenuItemSpriteExtra* m_selected;
 
-    bool setup(int, int, int, bool, MiniFunction<void(int)>) override;
+    bool setup(int, int, int, bool, SetFeatureCallback) override;
     void createFeatureToggle(CCMenu*, GJFeatureState);
 public:
-    static FRSetFeaturePopup* create(int, int, int, bool, MiniFunction<void(int)>);
+    static FRSetFeaturePopup* create(int, int, int, bool, SetFeatureCallback);
 };

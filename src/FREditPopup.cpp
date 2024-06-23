@@ -1,18 +1,17 @@
 #include "FREditPopup.hpp"
 
-FREditPopup* FREditPopup::create(FRLevelInfoLayer* delegate, GJGameLevel* level, int stars, int feature, int difficulty, int mdo) {
+FREditPopup* FREditPopup::create(GJGameLevel* level, int stars, int feature, int difficulty, int mdo, UpdateFakeRateCallback callback) {
     auto ret = new FREditPopup();
-    if (ret && ret->initAnchored(300.0f, 200.0f, delegate, level, stars, feature, difficulty, mdo)) {
+    if (ret->initAnchored(300.0f, 200.0f, level, stars, feature, difficulty, mdo, callback)) {
         ret->autorelease();
         return ret;
     }
-    CC_SAFE_DELETE(ret);
+    delete ret;
     return nullptr;
 }
 
-bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int stars, int feature, int difficulty, int mdo) {
+bool FREditPopup::setup(GJGameLevel* level, int stars, int feature, int difficulty, int mdo, UpdateFakeRateCallback callback) {
     setTitle("Fake Rate");
-    m_delegate = delegate;
     m_level = level;
     m_stars = stars;
     m_feature = feature;
@@ -74,7 +73,7 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
     m_buttonMenu->addChild(difficultyButton);
 
     auto starsButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Stars", "goldFont.fnt", "GJ_button_02.png", 0.8f), [this, stars](auto) {
-        auto popup = SetIDPopup::create(m_stars, 0, 127, "Set Stars", "Set", true, stars, 60.0f, false, false);
+        auto popup = SetIDPopup::create(m_stars, 0, 127, "Set Stars", "Set", true, stars, 0.0f, false, false);
         popup->m_delegate = this;
         popup->show();
     });
@@ -90,7 +89,7 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
     featureButton->setPosition(200.0f, 70.0f);
     m_buttonMenu->addChild(featureButton);
 
-    auto addButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this](auto) {
+    auto addButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
         auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
         auto it = std::find_if(vec.begin(), vec.end(), [this](auto const& item) {
             return item.id == m_level->m_levelID;
@@ -111,13 +110,13 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
             });
         }
         Mod::get()->setSavedValue("fake-rate", vec);
-        m_delegate->updateFakeRate(m_stars, m_feature, m_difficulty, m_moreDifficultiesOverride, true, true);
+        callback(m_stars, m_feature, m_difficulty, m_moreDifficultiesOverride, true, true);
         onClose(nullptr);
     });
     addButton->setPosition(150.0f, 30.0f);
     m_buttonMenu->addChild(addButton);
 
-    auto removeButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Remove", "goldFont.fnt", "GJ_button_06.png", 0.8f), [this](auto) {
+    auto removeButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Remove", "goldFont.fnt", "GJ_button_06.png", 0.8f), [this, callback](auto) {
         auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
         if (vec.empty()) return;
         vec.erase(std::remove_if(vec.begin(), vec.end(), [this](auto const& item) {
@@ -125,7 +124,7 @@ bool FREditPopup::setup(FRLevelInfoLayer* delegate, GJGameLevel* level, int star
         }), vec.end());
         Mod::get()->setSavedValue("fake-rate", vec);
         auto stars = m_level->m_stars;
-        m_delegate->updateFakeRate(m_level->m_stars, m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0, FakeRate::getDifficultyFromLevel(m_level),
+        callback(m_level->m_stars, m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0, FakeRate::getDifficultyFromLevel(m_level),
             stars == 4 || stars == 7 || stars == 9 ? stars : 0, true, false);
         onClose(nullptr);
     });
@@ -171,36 +170,36 @@ FREditPopup::~FREditPopup() {
     m_coins->release();
 }
 
-FRSetDifficultyPopup* FRSetDifficultyPopup::create(int difficulty, int moreDifficultiesOverride, bool legacy, MiniFunction<void(int, int)> callback) {
+FRSetDifficultyPopup* FRSetDifficultyPopup::create(int difficulty, int moreDifficultiesOverride, bool legacy, SetDifficultyCallback callback) {
     auto ret = new FRSetDifficultyPopup();
-    if (ret && ret->initAnchored(300.0f, 250.0f, difficulty, moreDifficultiesOverride, legacy, callback)) {
+    if (ret->initAnchored(300.0f, 250.0f, difficulty, moreDifficultiesOverride, legacy, callback)) {
         ret->autorelease();
         return ret;
     }
-    CC_SAFE_DELETE(ret);
+    delete ret;
     return nullptr;
 }
 
-bool FRSetDifficultyPopup::setup(int difficulty, int moreDifficultiesOverride, bool legacy, MiniFunction<void(int, int)> callback) {
-    setTitle("Set Difficulty");
+bool FRSetDifficultyPopup::setup(int difficulty, int moreDifficultiesOverride, bool legacy, SetDifficultyCallback callback) {
+    setTitle("Select Difficulty");
     m_difficulty = difficulty;
     m_moreDifficultiesOverride = moreDifficultiesOverride;
     m_legacy = legacy;
     
     auto menuRow1 = CCMenu::create();
-    menuRow1->setLayout(RowLayout::create()->setGap(20.0f));
+    menuRow1->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     menuRow1->setPosition(150.0f, 185.0f);
     menuRow1->setContentSize({ 300.0f, 45.0f });
     m_mainLayer->addChild(menuRow1);
 
     auto menuRow2 = CCMenu::create();
-    menuRow2->setLayout(RowLayout::create()->setGap(20.0f));
+    menuRow2->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     menuRow2->setPosition(150.0f, 135.0f);
     menuRow2->setContentSize({ 300.0f, 45.0f });
     m_mainLayer->addChild(menuRow2);
 
     auto menuRow3 = CCMenu::create();
-    menuRow3->setLayout(RowLayout::create()->setGap(20.0f));
+    menuRow3->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     menuRow3->setPosition(150.0f, 80.0f);
     menuRow3->setContentSize({ 300.0f, 65.0f });
     m_mainLayer->addChild(menuRow3);
@@ -255,26 +254,26 @@ void FRSetDifficultyPopup::createDifficultyToggle(CCMenu* menu, int difficulty, 
     menu->addChild(toggle);
 }
 
-FRSetFeaturePopup* FRSetFeaturePopup::create(int feature, int difficulty, int moreDifficultiesOverride, bool legacy, MiniFunction<void(int)> callback) {
+FRSetFeaturePopup* FRSetFeaturePopup::create(int feature, int difficulty, int moreDifficultiesOverride, bool legacy, SetFeatureCallback callback) {
     auto ret = new FRSetFeaturePopup();
-    if (ret && ret->initAnchored(300.0f, 150.0f, feature, difficulty, moreDifficultiesOverride, legacy, callback)) {
+    if (ret->initAnchored(300.0f, 150.0f, feature, difficulty, moreDifficultiesOverride, legacy, callback)) {
         ret->autorelease();
         return ret;
     }
-    CC_SAFE_DELETE(ret);
+    delete ret;
     return nullptr;
 }
 
-bool FRSetFeaturePopup::setup(int feature, int difficulty, int moreDifficultiesOverride, bool legacy, MiniFunction<void(int)> callback) {
-    setTitle("Set Feature");
+bool FRSetFeaturePopup::setup(int feature, int difficulty, int moreDifficultiesOverride, bool legacy, SetFeatureCallback callback) {
+    setTitle("Select Feature");
     m_feature = static_cast<GJFeatureState>(feature);
     m_difficulty = difficulty;
     m_moreDifficultiesOverride = moreDifficultiesOverride;
     m_legacy = legacy;
 
     auto menuRow = CCMenu::create();
-    menuRow->setLayout(RowLayout::create()->setGap(25.0f));
-    menuRow->setPosition(150.0f, 75.0f);
+    menuRow->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
+    menuRow->setPosition(150.0f, 80.0f + (difficulty > 5 ? 5.0f : 0.0f));
     menuRow->setContentSize({ 300.0f, 50.0f });
     m_mainLayer->addChild(menuRow);
 
