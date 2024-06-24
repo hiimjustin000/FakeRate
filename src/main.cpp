@@ -195,7 +195,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         else {
             auto moreDifficultiesOverride = mdo;
             auto starsRequested = m_level->m_starsRequested;
-            if (remove && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9)) moreDifficultiesOverride = starsRequested;
+            if (remove && m_level->m_stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9)) moreDifficultiesOverride = starsRequested;
             if (moreDifficultiesOverride == 0) return;
             switch (moreDifficultiesOverride) {
                 case 4: frameName = legacy ? "uproxide.more_difficulties/MD_Difficulty04_Legacy.png" : "uproxide.more_difficulties/MD_Difficulty04.png"; break;

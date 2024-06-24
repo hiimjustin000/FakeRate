@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.2.2 (2024-06-24)
+- Fixed a bug where removing the fake rate would display the wrong difficulty face with More Difficulties enabled
+
 ## v1.2.1 (2024-06-23)
 - Fixed gaps in the various fake rate popup elements
 

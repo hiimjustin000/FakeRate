@@ -185,7 +185,7 @@ bool FRSetDifficultyPopup::setup(int difficulty, int moreDifficultiesOverride, b
     m_difficulty = difficulty;
     m_moreDifficultiesOverride = moreDifficultiesOverride;
     m_legacy = legacy;
-    
+
     auto menuRow1 = CCMenu::create();
     menuRow1->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     menuRow1->setPosition(150.0f, 185.0f);
@@ -283,7 +283,7 @@ bool FRSetFeaturePopup::setup(int feature, int difficulty, int moreDifficultiesO
     createFeatureToggle(menuRow, GJFeatureState::Legendary);
     createFeatureToggle(menuRow, GJFeatureState::Mythic);
     menuRow->updateLayout();
-    
+
     auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
         callback(static_cast<int>(m_feature));
         onClose(nullptr);

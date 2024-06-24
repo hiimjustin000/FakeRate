@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(FakeRate VERSION 1.2.1)
+project(FakeRate VERSION 1.2.2)
 
 add_library(${PROJECT_NAME} SHARED
     src/FakeRate.cpp
