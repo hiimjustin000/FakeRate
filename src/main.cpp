@@ -124,7 +124,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         m_starsLabel->setPosition(m_starsIcon->getPositionX() - 8.0f, m_starsIcon->getPositionY());
         m_starsLabel->setString(std::to_string(stars).c_str());
         m_starsLabel->setVisible(showStars);
-        m_starsLabel->setColor({ 255, 255, (unsigned char)(gsm->hasCompletedLevel(m_level) ? 50 : 255) });
+        if (gsm->hasCompletedLevel(m_level)) m_starsLabel->setColor({ 255, 255, 50 });
         for (int i = 0; i < m_coins->count(); i++) {
             auto coin = static_cast<CCSprite*>(m_coins->objectAtIndex(i));
             coin->setPositionY(position.y - 31.5f - (showStars ? 14.0f : 0.0f)
@@ -279,7 +279,7 @@ class $modify(FRLevelCell, LevelCell) {
                         difficultyContainer->addChild(starsLabel);
                     }
                     starsLabel->setString(std::to_string(fakeRateData.stars).c_str());
-                    starsLabel->setColor({ 255, 255, (unsigned char)(gsm->hasCompletedLevel(level) ? 50 : 255) });
+                    if (gsm->hasCompletedLevel(level)) starsLabel->setColor({ 255, 255, 50 });
                 }
                 else {
                     if (auto starsIcon = static_cast<CCSprite*>(difficultyContainer->getChildByID("stars-icon"))) starsIcon->removeFromParent();
@@ -336,11 +336,12 @@ class $modify(FRLevelCell, LevelCell) {
                     }
                     auto orbs = FakeRate::getBaseCurrency(fakeRateData.stars);
                     auto totalOrbs = (int)floorf(orbs * 1.25f);
-                    orbsLabel->setString((level->m_normalPercent == 100 ?
-                        fmt::format("{}", totalOrbs) :
-                        fmt::format("{}/{}", (int)floorf(orbs * level->m_normalPercent / 100.0f), totalOrbs)).c_str());
+                    auto percent = level->m_normalPercent.value();
+                    auto savedLevel = GameLevelManager::sharedState()->getSavedLevel(level->m_levelID);
+                    if (savedLevel) percent = savedLevel->m_normalPercent.value();
+                    orbsLabel->setString((percent == 100 ? fmt::format("{}", totalOrbs) : fmt::format("{}/{}", (int)floorf(orbs * percent / 100.0f), totalOrbs)).c_str());
                     orbsLabel->limitLabelWidth(45.0f, m_compactView ? 0.3f : 0.4f, 0.0f);
-                    if (level->m_normalPercent == 100) orbsLabel->setColor({ 100, 255, 255 });
+                    if (percent == 100) orbsLabel->setColor({ 100, 255, 255 });
                 }
                 else {
                     if (auto orbsIcon = static_cast<CCSprite*>(m_mainLayer->getChildByID("orbs-icon"))) orbsIcon->removeFromParent();
