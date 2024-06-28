@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.2.5 (2024-06-28)
+- Fixed a bug that caused the More Difficulties difficulty face to be offset in the level cell
+
 ## v1.2.4 (2024-06-27)
 - Fixed a bug that caused orbs not to display correctly in map packs
 

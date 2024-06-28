@@ -182,10 +182,6 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         m_difficultySprite->setOpacity(255);
 
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
-        auto pos = difficultySpriteParent->convertToWorldSpace({
-            m_difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
-            m_difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
-        });
         auto frameName = "";
         auto stars = m_fields->m_fakeRateData.stars;
         if (spriteName == "uproxide.more_difficulties/MD_DifficultyCP.png") {
@@ -204,6 +200,10 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             }
             if (!moreDifficultiesSprite) {
                 moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(frameName);
+                moreDifficultiesSprite->setPosition(difficultySpriteParent->convertToWorldSpace({
+                    m_difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
+                    m_difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
+                }));
                 moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
                 addChild(moreDifficultiesSprite, 3);
             }
@@ -211,7 +211,6 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
                 moreDifficultiesSprite->initWithSpriteFrameName(frameName);
                 moreDifficultiesSprite->setVisible(true);
             }
-            moreDifficultiesSprite->setPosition(pos);
             m_difficultySprite->setOpacity(0);
         }
     }
@@ -381,14 +380,17 @@ class $modify(FRLevelCell, LevelCell) {
             }
             if (!moreDifficultiesSprite) {
                 moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(frameName);
+                moreDifficultiesSprite->setPosition({
+                    difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
+                    difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
+                });
                 moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
-                addChild(moreDifficultiesSprite, 3);
+                difficultyContainer->addChild(moreDifficultiesSprite, 3);
             }
             else {
                 moreDifficultiesSprite->initWithSpriteFrameName(frameName);
                 moreDifficultiesSprite->setVisible(true);
             }
-            moreDifficultiesSprite->setPosition(pos);
             difficultySprite->setOpacity(0);
         }
     }
