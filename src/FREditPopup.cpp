@@ -249,7 +249,8 @@ void FRSetDifficultyPopup::createDifficultyToggle(CCMenu* menu, int difficulty, 
         FakeRate::toggle(sender->getNormalImage(), true);
         m_selected = sender;
     });
-    auto isToggled = difficulty == m_difficulty && (!Loader::get()->isModLoaded("uproxide.more_difficulties") || moreDifficultiesOverride == m_moreDifficultiesOverride);
+    auto isToggled = (moreDifficultiesOverride > 0 && moreDifficultiesOverride == m_moreDifficultiesOverride) ||
+        (m_moreDifficultiesOverride <= 0 && m_difficulty == difficulty);
     FakeRate::toggle(toggle->getNormalImage(), isToggled);
     m_selected = isToggled ? toggle : m_selected;
     menu->addChild(toggle);

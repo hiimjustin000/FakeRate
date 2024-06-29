@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.2.7 (2024-06-29)
+- Fixed a bug that caused the game to crash when a difficulty face in the difficulty selection popup was clicked with More Difficulties uninstalled or disabled (again)
+
 ## v1.2.6 (2024-06-29)
 - Fixed a bug that caused the More Difficulties difficulty face to be offset in the level info page
 
