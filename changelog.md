@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.2.6 (2024-06-29)
+- Fixed a bug that caused the More Difficulties difficulty face to be offset in the level info page
+
 ## v1.2.5 (2024-06-28)
 - Fixed a bug that caused the More Difficulties difficulty face to be offset in the level cell
 

@@ -53,14 +53,16 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
     void checkFakeRate() {
         auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
         auto it = std::find_if(vec.begin(), vec.end(), [this](auto const& item) { return item.id == m_level->m_levelID; });
-        auto stars = m_level->m_stars;
+        auto stars = m_level->m_stars.value();
+        auto starsRequested = m_level->m_starsRequested;
         if (it != vec.end()) updateFakeRate(it->stars, it->feature, it->difficulty, it->moreDifficultiesOverride, false, true);
         else m_fields->m_fakeRateData = {
             .id = m_level->m_levelID,
             .stars = stars,
             .feature = m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0,
             .difficulty = FakeRate::getDifficultyFromLevel(m_level),
-            .moreDifficultiesOverride = stars == 4 || stars == 7 || stars == 9 ? stars : 0
+            .moreDifficultiesOverride = stars == 4 || stars == 7 || stars == 9 ? stars :
+                stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9) ? starsRequested : 0
         };
     }
 
@@ -200,10 +202,6 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             }
             if (!moreDifficultiesSprite) {
                 moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(frameName);
-                moreDifficultiesSprite->setPosition(difficultySpriteParent->convertToWorldSpace({
-                    m_difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
-                    m_difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
-                }));
                 moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
                 addChild(moreDifficultiesSprite, 3);
             }
@@ -211,6 +209,10 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
                 moreDifficultiesSprite->initWithSpriteFrameName(frameName);
                 moreDifficultiesSprite->setVisible(true);
             }
+            moreDifficultiesSprite->setPosition(difficultySpriteParent->convertToWorldSpace({
+                m_difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
+                m_difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
+            }));
             m_difficultySprite->setOpacity(0);
         }
     }
@@ -380,10 +382,6 @@ class $modify(FRLevelCell, LevelCell) {
             }
             if (!moreDifficultiesSprite) {
                 moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(frameName);
-                moreDifficultiesSprite->setPosition({
-                    difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
-                    difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
-                });
                 moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
                 difficultyContainer->addChild(moreDifficultiesSprite, 3);
             }
@@ -391,6 +389,10 @@ class $modify(FRLevelCell, LevelCell) {
                 moreDifficultiesSprite->initWithSpriteFrameName(frameName);
                 moreDifficultiesSprite->setVisible(true);
             }
+            moreDifficultiesSprite->setPosition({
+                difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
+                difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
+            });
             difficultySprite->setOpacity(0);
         }
     }
