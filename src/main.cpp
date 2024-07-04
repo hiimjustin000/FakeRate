@@ -61,8 +61,8 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             .stars = stars,
             .feature = m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0,
             .difficulty = FakeRate::getDifficultyFromLevel(m_level),
-            .moreDifficultiesOverride = stars == 4 || stars == 7 || stars == 9 ? stars :
-                stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9) ? starsRequested : 0
+            .moreDifficultiesOverride = Loader::get()->isModLoaded("uproxide.more_difficulties") ? stars == 4 || stars == 7 || stars == 9 ? stars :
+                stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9) ? starsRequested : 0 : 0
         };
     }
 

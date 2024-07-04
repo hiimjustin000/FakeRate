@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.2.8 (2024-07-04)
+- Fixed a bug that caused the game to crash when a difficulty face in the difficulty selection popup was clicked with More Difficulties uninstalled or disabled (Somehow this bug keeps coming back)
+
 ## v1.2.7 (2024-06-29)
 - Fixed a bug that caused the game to crash when a difficulty face in the difficulty selection popup was clicked with More Difficulties uninstalled or disabled (again)
 
