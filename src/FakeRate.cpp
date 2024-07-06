@@ -35,12 +35,13 @@ std::string FakeRate::getSpriteName(CCSprite* sprite) {
 
 void FakeRate::toggle(CCNode* node, bool enabled) {
     if (auto sprite = typeinfo_cast<CCSprite*>(node)) {
-        sprite->setColor(enabled ? ccColor3B { 255, 255, 255 } : ccColor3B { 125, 125, 125 });
+        auto color = enabled ? ccColor3B { 255, 255, 255 } : ccColor3B { 125, 125, 125 };
+        sprite->setColor(color);
 
         if (sprite->getChildren()) {
             auto children = sprite->getChildren();
-            for (auto i = 0; i < children->count(); i++) {
-                if (auto child = typeinfo_cast<CCSprite*>(children->objectAtIndex(i))) child->setColor(enabled ? ccColor3B { 255, 255, 255 } : ccColor3B { 125, 125, 125 });
+            for (int i = 0; i < children->count(); i++) {
+                if (auto child = typeinfo_cast<CCSprite*>(children->objectAtIndex(i))) child->setColor(color);
             }
         }
     }

@@ -52,7 +52,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
 
     void checkFakeRate() {
         auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
-        auto it = std::find_if(vec.begin(), vec.end(), [this](auto const& item) { return item.id == m_level->m_levelID; });
+        auto it = std::find_if(vec.begin(), vec.end(), [this](FakeRateSaveData const& item) { return item.id == m_level->m_levelID; });
         auto stars = m_level->m_stars.value();
         auto starsRequested = m_level->m_starsRequested;
         if (it != vec.end()) updateFakeRate(it->stars, it->feature, it->difficulty, it->moreDifficultiesOverride, false, true);
@@ -99,8 +99,8 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         auto gsm = GameStatsManager::sharedState();
         auto showStars = stars > 0 || m_level->m_dailyID > 0 || m_level->m_gauntletLevel;
-        m_difficultySprite->updateDifficultyFrame(difficulty, GJDifficultyName::Long);
         m_difficultySprite->updateFeatureState((GJFeatureState)feature);
+        m_difficultySprite->updateDifficultyFrame(difficulty, GJDifficultyName::Long);
         CCNode* nodeToSetPosition = m_difficultySprite;
         CCNode* difficultySpriteParent = m_difficultySprite->getParent();
         if (Loader::get()->isModLoaded("acaruso.horn")) {
@@ -230,7 +230,7 @@ class $modify(FRLevelCell, LevelCell) {
         if (!difficultyContainer) difficultyContainer = m_mainLayer->getChildByID("grd-demon-icon-layer");
         if (difficultyContainer) {
             auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
-            auto it = std::find_if(vec.begin(), vec.end(), [level](auto const& item) { return item.id == level->m_levelID; });
+            auto it = std::find_if(vec.begin(), vec.end(), [level](FakeRateSaveData const& item) { return item.id == level->m_levelID; });
             if (it != vec.end()) {
                 auto difficultySprite = static_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
                 if (auto betweenDifficultySprite = static_cast<CCSprite*>(difficultyContainer->getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"))) {
@@ -256,8 +256,8 @@ class $modify(FRLevelCell, LevelCell) {
                 }
 
                 auto& fakeRateData = *it;
-                difficultySprite->updateDifficultyFrame(fakeRateData.difficulty, GJDifficultyName::Short);
                 difficultySprite->updateFeatureState((GJFeatureState)fakeRateData.feature);
+                difficultySprite->updateDifficultyFrame(fakeRateData.difficulty, GJDifficultyName::Short);
                 auto addCoins = level->m_coins > 0 && !m_compactView;
                 auto showStars = fakeRateData.stars > 0 || level->m_dailyID > 0;
                 difficultySprite->setPositionY((showStars || addCoins ? 5.0f : 0.0f) + (showStars && addCoins ? 9.0f : 0.0f) + (level->m_dailyID > 0 ? 10.0f : 0.0f));

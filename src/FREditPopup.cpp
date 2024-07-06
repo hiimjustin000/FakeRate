@@ -91,7 +91,7 @@ bool FREditPopup::setup(GJGameLevel* level, int stars, int feature, int difficul
 
     auto addButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
         auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
-        auto it = std::find_if(vec.begin(), vec.end(), [this](auto const& item) {
+        auto it = std::find_if(vec.begin(), vec.end(), [this](FakeRateSaveData const& item) {
             return item.id == m_level->m_levelID;
         });
         if (it != vec.end()) {
@@ -119,7 +119,7 @@ bool FREditPopup::setup(GJGameLevel* level, int stars, int feature, int difficul
     auto removeButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Remove", "goldFont.fnt", "GJ_button_06.png", 0.8f), [this, callback](auto) {
         auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
         if (vec.empty()) return;
-        vec.erase(std::remove_if(vec.begin(), vec.end(), [this](auto const& item) {
+        vec.erase(std::remove_if(vec.begin(), vec.end(), [this](FakeRateSaveData const& item) {
             return item.id == m_level->m_levelID;
         }), vec.end());
         Mod::get()->setSavedValue("fake-rate", vec);
@@ -142,8 +142,8 @@ void FREditPopup::setIDPopupClosed(SetIDPopup*, int stars) {
 }
 
 void FREditPopup::updateLabels() {
-    m_difficultySprite->updateDifficultyFrame(m_difficulty, GJDifficultyName::Long);
     m_difficultySprite->updateFeatureState((GJFeatureState)m_feature);
+    m_difficultySprite->updateDifficultyFrame(m_difficulty, GJDifficultyName::Long);
     m_difficultySprite->setPositionY(100.0f + (m_difficulty > 5 ? 5.0f : 0.0f) + (m_stars > 0 ? 10.0f : 0.0f));
     m_starSprite->setPosition({ m_difficultySprite->getPositionX() + 8.0f, m_difficultySprite->getPositionY() - 30.0f - (m_difficulty > 5 ? 9.0f : 0.0f) });
     m_starSprite->setVisible(m_stars > 0);
@@ -242,15 +242,14 @@ void FRSetDifficultyPopup::createDifficultyToggle(CCMenu* menu, int difficulty, 
         frameName = m_legacy ? fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}_Legacy.png", moreDifficultiesOverride)
             : fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}.png", moreDifficultiesOverride);
     else if (moreDifficultiesOverride > 0) return;
-    auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(frameName.c_str(), 1.0f, [this, difficulty, moreDifficultiesOverride](auto sender) {
+    auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(frameName.c_str(), 1.0f, [this, difficulty, moreDifficultiesOverride](CCMenuItemSpriteExtra* sender) {
         m_difficulty = difficulty;
         m_moreDifficultiesOverride = moreDifficultiesOverride;
         FakeRate::toggle(m_selected->getNormalImage(), false);
         FakeRate::toggle(sender->getNormalImage(), true);
         m_selected = sender;
     });
-    auto isToggled = (moreDifficultiesOverride > 0 && moreDifficultiesOverride == m_moreDifficultiesOverride) ||
-        (m_moreDifficultiesOverride <= 0 && m_difficulty == difficulty);
+    auto isToggled = moreDifficultiesOverride == m_moreDifficultiesOverride && (m_moreDifficultiesOverride <= 0 ? difficulty == m_difficulty : true);
     FakeRate::toggle(toggle->getNormalImage(), isToggled);
     m_selected = isToggled ? toggle : m_selected;
     menu->addChild(toggle);
@@ -306,7 +305,7 @@ void FRSetFeaturePopup::createFeatureToggle(CCMenu* menu, GJFeatureState feature
         mdSprite->setPosition(difficultySprite->getContentSize() / 2 + (m_legacy ? CCPoint { 0.0f, 0.0f } : CCPoint { 0.25f, -0.1f }));
         difficultySprite->setOpacity(0);
     }
-    auto toggle = CCMenuItemExt::createSpriteExtra(difficultySprite, [this, feature](auto sender) {
+    auto toggle = CCMenuItemExt::createSpriteExtra(difficultySprite, [this, feature](CCMenuItemSpriteExtra* sender) {
         m_feature = feature;
         FakeRate::toggle(m_selected->getNormalImage(), false);
         if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(m_selected->getNormalImage(), 0)) particleSystem->setVisible(false);

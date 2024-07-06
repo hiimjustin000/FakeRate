@@ -1,4 +1,8 @@
 # Fake Rate Changelog
+## v1.2.9 (2024-07-05)
+- Fixed a bug that caused two difficulty faces to be toggled in the difficulty selection popup with More Difficulties enabled
+- Fixed incompatibility with the mod "GodlikeFaces" by adyagmd
+
 ## v1.2.8 (2024-07-04)
 - Fixed a bug that caused the game to crash when a difficulty face in the difficulty selection popup was clicked with More Difficulties uninstalled or disabled (Somehow this bug keeps coming back)
 
