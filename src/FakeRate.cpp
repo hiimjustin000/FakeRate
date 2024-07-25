@@ -46,3 +46,33 @@ void FakeRate::toggle(CCNode* node, bool enabled) {
         }
     }
 }
+
+CCPoint FakeRate::getDIBOffset(int difficulty, GJDifficultyName name) {
+    if (difficulty < 1 || difficulty > 20) return { 0.0f, 0.0f };
+    return name == GJDifficultyName::Long ? LONG_OFFSETS[difficulty - 1] : SHORT_OFFSETS[difficulty - 1];
+}
+
+int FakeRate::getGRDOverride(CCSprite* sprite) {
+    auto sprName = getSpriteName(sprite);
+    if (sprName.substr(sprName.size() - 5) == "_text") sprName = sprName.substr(0, sprName.size() - 5);
+
+    auto pos = sprName.find("GrD_demon");
+    if (pos != std::string::npos) {
+        auto num = sprName.substr(pos + 9);
+        return std::stoi(num) + 1;
+    }
+    else return 0;
+}
+
+int FakeRate::getDIBOverride(CCSprite* sprite) {
+    auto sprName = getSpriteName(sprite);
+    if (sprName.substr(sprName.size() - 12) == "_btn_001.png") sprName = sprName.substr(0, sprName.size() - 12);
+    else if (sprName.substr(sprName.size() - 13) == "_btn2_001.png") sprName = sprName.substr(0, sprName.size() - 13);
+
+    auto pos = sprName.find("DIB_");
+    if (pos != std::string::npos) {
+        auto num = sprName.substr(pos + 4, 2);
+        return std::stoi(num);
+    }
+    else return 0;
+}

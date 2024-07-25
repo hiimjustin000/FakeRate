@@ -19,11 +19,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         auto buttonSprite = CircleButtonSprite::createWithSprite("FR_fakeRateBtn_001.png"_spr, 1.0f, CircleBaseColor::Green, CircleBaseSize::Medium);
         buttonSprite->getTopNode()->setScale(1.0f);
         auto fakeRateButton = CCMenuItemExt::createSpriteExtra(buttonSprite, [this](auto) {
-            FREditPopup::create(m_level, m_fields->m_fakeRateData.stars, m_fields->m_fakeRateData.feature,
-                m_fields->m_fakeRateData.difficulty, m_fields->m_fakeRateData.moreDifficultiesOverride,
-                [this](int stars, int feature, int difficulty, int mdo, bool update, bool coins) {
-                    updateFakeRate(stars, feature, difficulty, mdo, update, coins);
-                })->show();
+            FREditPopup::create(m_level, m_fields->m_fakeRateData, [this](FakeRateSaveData data, bool remove) { updateFakeRate(data, remove); })->show();
         });
         fakeRateButton->setID("fake-rate-button"_spr);
         auto leftSideMenu = getChildByID("left-side-menu");
@@ -55,72 +51,80 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         auto it = std::find_if(vec.begin(), vec.end(), [this](FakeRateSaveData const& item) { return item.id == m_level->m_levelID; });
         auto stars = m_level->m_stars.value();
         auto starsRequested = m_level->m_starsRequested;
-        if (it != vec.end()) updateFakeRate(it->stars, it->feature, it->difficulty, it->moreDifficultiesOverride, false, true);
+        auto grandpaDemon = static_cast<CCSprite*>(getChildByID("grd-difficulty"));
+        auto demonInBetween = static_cast<CCSprite*>(getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"));
+        if (it != vec.end()) updateFakeRate(*it, false);
         else m_fields->m_fakeRateData = {
             .id = m_level->m_levelID,
             .stars = stars,
             .feature = m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0,
             .difficulty = FakeRate::getDifficultyFromLevel(m_level),
             .moreDifficultiesOverride = Loader::get()->isModLoaded("uproxide.more_difficulties") ? stars == 4 || stars == 7 || stars == 9 ? stars :
-                stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9) ? starsRequested : 0 : 0
+                stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9) ? starsRequested : 0 : 0,
+            .grandpaDemonOverride = grandpaDemon ? FakeRate::getGRDOverride(grandpaDemon) : 0,
+            .demonsInBetweenOverride = demonInBetween ? FakeRate::getDIBOverride(demonInBetween) : 0,
+            .coins = m_level->m_coinsVerified > 0
         };
     }
 
-    void updateFakeRate(int stars, int feature, int difficulty, int mdo, bool update, bool coins) {
+    void updateFakeRate(FakeRateSaveData data, bool remove) {
+        auto stars = data.stars;
+        auto feature = data.feature;
+        auto difficulty = data.difficulty;
+        auto mdo = data.moreDifficultiesOverride;
+        auto gdo = data.grandpaDemonOverride;
+        auto dbo = data.demonsInBetweenOverride;
+        auto coins = data.coins;
         m_fields->m_fakeRateData = {
             .id = m_level->m_levelID,
             .stars = stars,
             .feature = feature,
             .difficulty = difficulty,
-            .moreDifficultiesOverride = mdo
+            .moreDifficultiesOverride = mdo,
+            .grandpaDemonOverride = gdo,
+            .demonsInBetweenOverride = dbo,
+            .coins = coins
         };
 
+        auto hideDifficulty = false;
         if (auto betweenDifficultySprite = static_cast<CCSprite*>(getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"))) {
-            betweenDifficultySprite->setVisible(false);
-            m_difficultySprite->setOpacity(255);
+            betweenDifficultySprite->setVisible(remove);
+            m_difficultySprite->setOpacity(remove ? 0 : 255);
+            hideDifficulty = remove || hideDifficulty;
+            m_fields->m_fakeRateData.demonsInBetweenOverride = remove ? FakeRate::getDIBOverride(betweenDifficultySprite) : dbo;
         }
         auto gddpOverride = false;
         if (auto gddpDifficultySprite = static_cast<CCSprite*>(getChildByID("gddp-difficulty"))) {
             gddpOverride = gddpDifficultySprite->isVisible();
-            gddpDifficultySprite->setVisible(false);
-            m_difficultySprite->setOpacity(255);
+            gddpDifficultySprite->setVisible(remove);
+            m_difficultySprite->setOpacity(remove ? 0 : 255);
+            hideDifficulty = remove || hideDifficulty;
         }
         if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && !gddpOverride) {
             removeChildByTag(69420);
+            auto hasDemon = false;
             auto children = reinterpret_cast<CCNode**>(getChildren()->data->arr);
             for (int i = 0; i < getChildrenCount(); i++) {
-                if (children[i]->getID() == "grd-difficulty") children[i]->setVisible(false);
+                if (children[i]->getID() == "grd-difficulty") {
+                    children[i]->setVisible(remove);
+                    hasDemon = true;
+                }
             }
-            if (auto grdInfinity = getChildByID("grd-infinity")) grdInfinity->setVisible(false);
+            if (auto grdInfinity = getChildByID("grd-infinity")) grdInfinity->setVisible(remove);
             m_difficultySprite->setVisible(true);
+            m_difficultySprite->setOpacity(hasDemon && remove ? 0 : 255);
+            hideDifficulty = hasDemon && remove || hideDifficulty;
             if (auto featureGlow = m_difficultySprite->getChildByTag(69420))
-                featureGlow->setPosition(m_difficultySprite->getContentSize() * 0.5f);
+                featureGlow->setPosition(m_difficultySprite->getContentSize() / 2);
+            m_fields->m_fakeRateData.grandpaDemonOverride = hasDemon && remove ? FakeRate::getGRDOverride(static_cast<CCSprite*>(getChildByID("grd-difficulty"))) : gdo;
         }
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         auto gsm = GameStatsManager::sharedState();
-        auto showStars = stars > 0 || m_level->m_dailyID > 0 || m_level->m_gauntletLevel;
+        auto showStars = stars != 0 || m_level->m_dailyID > 0 || m_level->m_gauntletLevel;
         m_difficultySprite->updateFeatureState((GJFeatureState)feature);
         m_difficultySprite->updateDifficultyFrame(difficulty, GJDifficultyName::Long);
-        CCNode* nodeToSetPosition = m_difficultySprite;
-        CCNode* difficultySpriteParent = m_difficultySprite->getParent();
-        if (Loader::get()->isModLoaded("acaruso.horn")) {
-            auto children = getChildren();
-            for (int i = 0; i < children->count(); i++) {
-                if (auto child = typeinfo_cast<CCMenu*>(children->objectAtIndex(i))) {
-                    auto grandchildren = child->getChildren();
-                    if (!grandchildren || grandchildren->count() < 1) continue;
-                    if (auto button = typeinfo_cast<CCMenuItemSpriteExtra*>(grandchildren->objectAtIndex(0))) {
-                        if (button->getNormalImage() == m_difficultySprite) {
-                            nodeToSetPosition = child;
-                            difficultySpriteParent = button;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        nodeToSetPosition->setPositionY(winSize.height / 2 + 56.0f + (difficulty > 5 ? 5.0f : 0.0f) + (showStars ? 10.0f : 0.0f));
-        auto& position = nodeToSetPosition->getPosition();
+        m_difficultySprite->setPositionY(winSize.height / 2 + 56.0f + (difficulty > 5 ? 5.0f : 0.0f) + (showStars ? 10.0f : 0.0f));
+        auto& position = m_difficultySprite->getPosition();
         m_starsIcon->setPosition({ position.x + 8.0f, position.y - 30.0f - (difficulty > 5 ? 9.0f : 0.0f) });
         m_starsIcon->setVisible(showStars);
         m_starsLabel->setPosition(m_starsIcon->getPositionX() - 8.0f, m_starsIcon->getPositionY());
@@ -134,9 +138,9 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             auto coinStr = fmt::format("{}_{}", m_level->m_levelID.value(), i + 1);
             if (m_level->m_dailyID > 0) coinStr += "_" + std::to_string(m_level->m_dailyID);
             else if (m_level->m_gauntletLevel) coinStr += "_g";
-            if (coins || m_level->m_coinsVerified == 1)
-                coin->setColor(gsm->hasUserCoin(coinStr.c_str()) || gsm->hasPendingUserCoin(coinStr.c_str()) ? ccColor3B { 255, 255, 255 } : ccColor3B { 165, 165, 165 });
-            else coin->setColor(gsm->hasUserCoin(coinStr.c_str()) || gsm->hasPendingUserCoin(coinStr.c_str()) ? ccColor3B { 255, 175, 75 } : ccColor3B { 165, 113, 48 });
+            auto hasCoin = gsm->hasUserCoin(coinStr.c_str()) || gsm->hasPendingUserCoin(coinStr.c_str());
+            if (coins) coin->setColor(hasCoin ? ccColor3B { 255, 255, 255 } : ccColor3B { 165, 165, 165 });
+            else coin->setColor(hasCoin ? ccColor3B { 255, 175, 75 } : ccColor3B { 165, 113, 48 });
         }
         if (m_level->m_dailyID > 0 || m_level->m_gauntletLevel) {
             auto diamondLabel = static_cast<CCLabelBMFont*>(getChildByID("diamond-label"));
@@ -171,10 +175,27 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         }
         if (m_exactLengthLabel->isVisible()) m_exactLengthLabel->setPositionY(m_lengthLabel->getPositionY() - 14.0f);
 
-        if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(difficultySpriteParent, mdo, !coins);
+        m_difficultySprite->setOpacity(hideDifficulty ? 0 : 255);
+        if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(mdo, remove);
+        if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && gdo > 0 && gdo < 7) {
+            auto grdSprite = CCSprite::createWithSpriteFrameName(fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", gdo - 1).c_str());
+            grdSprite->setID("grandpa-demon-sprite"_spr);
+            grdSprite->setPosition(position);
+            addChild(grdSprite, 3);
+            m_difficultySprite->setOpacity(0);
+        }
+        else if (auto grdSprite = getChildByID("grandpa-demon-sprite"_spr)) grdSprite->removeFromParentAndCleanup(true);
+        if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && dbo > 0 && dbo < 21) {
+            auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn2_001.png", dbo).c_str());
+            dibSprite->setID("between-difficulty-sprite"_spr);
+            dibSprite->setPosition(position + FakeRate::getDIBOffset(dbo, GJDifficultyName::Long));
+            addChild(dibSprite, 3);
+            m_difficultySprite->setOpacity(0);
+        }
+        else if (auto dibSprite = getChildByID("between-difficulty-sprite"_spr)) dibSprite->removeFromParentAndCleanup(true);
     }
 
-    void fixMoreDifficultiesIncompatibility(CCNode* difficultySpriteParent, int mdo, bool remove) {
+    void fixMoreDifficultiesIncompatibility(int mdo, bool remove) {
         auto spriteName = std::string();
         auto moreDifficultiesSprite = static_cast<CCSprite*>(getChildByID("uproxide.more_difficulties/more-difficulties-spr"));
         if (moreDifficultiesSprite) {
@@ -209,10 +230,10 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
                 moreDifficultiesSprite->initWithSpriteFrameName(frameName);
                 moreDifficultiesSprite->setVisible(true);
             }
-            moreDifficultiesSprite->setPosition(difficultySpriteParent->convertToWorldSpace({
+            moreDifficultiesSprite->setPosition({
                 m_difficultySprite->getPositionX() + (legacy ? 0.0f : 0.25f),
                 m_difficultySprite->getPositionY() - (legacy ? 0.0f : 0.1f)
-            }));
+            });
             m_difficultySprite->setOpacity(0);
         }
     }
@@ -252,14 +273,14 @@ class $modify(FRLevelCell, LevelCell) {
                     }
                     else static_cast<CCSprite*>(difficultyContainer->getChildren()->lastObject())->setVisible(false);
                     if (auto featureGlow = difficultySprite->getChildByTag(69420))
-                        featureGlow->setPosition(difficultySprite->getContentSize() * 0.5f);
+                        featureGlow->setPosition(difficultySprite->getContentSize() / 2);
                 }
 
                 auto& fakeRateData = *it;
                 difficultySprite->updateFeatureState((GJFeatureState)fakeRateData.feature);
                 difficultySprite->updateDifficultyFrame(fakeRateData.difficulty, GJDifficultyName::Short);
                 auto addCoins = level->m_coins > 0 && !m_compactView;
-                auto showStars = fakeRateData.stars > 0 || level->m_dailyID > 0;
+                auto showStars = fakeRateData.stars != 0 || level->m_dailyID > 0;
                 difficultySprite->setPositionY((showStars || addCoins ? 5.0f : 0.0f) + (showStars && addCoins ? 9.0f : 0.0f) + (level->m_dailyID > 0 ? 10.0f : 0.0f));
                 auto gsm = GameStatsManager::sharedState();
                 if (showStars) {
@@ -349,7 +370,24 @@ class $modify(FRLevelCell, LevelCell) {
                     if (auto orbsLabel = static_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("orbs-label"))) orbsLabel->removeFromParent();
                 }
 
+                auto& position = difficultySprite->getPosition();
                 if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(fakeRateData);
+                auto gdo = fakeRateData.grandpaDemonOverride;
+                if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && gdo > 0 && gdo < 7) {
+                    auto grdSprite = CCSprite::createWithSpriteFrameName(fmt::format("itzkiba.grandpa_demon/GrD_demon{}.png", gdo - 1).c_str());
+                    grdSprite->setID("grandpa-demon-sprite"_spr);
+                    grdSprite->setPosition(position);
+                    difficultyContainer->addChild(grdSprite, 3);
+                    difficultySprite->setOpacity(0);
+                }
+                auto dbo = fakeRateData.demonsInBetweenOverride;
+                if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && dbo > 0 && dbo < 21) {
+                    auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn_001.png", dbo).c_str());
+                    dibSprite->setID("between-difficulty-sprite"_spr);
+                    dibSprite->setPosition(position + FakeRate::getDIBOffset(dbo, GJDifficultyName::Short));
+                    difficultyContainer->addChild(dibSprite, 3);
+                    difficultySprite->setOpacity(0);
+                }
             }
         }
     }

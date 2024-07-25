@@ -1,4 +1,10 @@
 # Fake Rate Changelog
+## v1.3.0 (2024-07-25)
+- Added Grandpa Demon and Demons In Between support
+- Added the ability to customize coin verification status
+- Added the ability to set negative stars
+- Added a gallery to the mod's about page
+
 ## v1.2.9 (2024-07-05)
 - Fixed a bug that caused two difficulty faces to be toggled in the difficulty selection popup with More Difficulties enabled
 - Fixed incompatibility with the mod "GodlikeFaces" by adyagmd
