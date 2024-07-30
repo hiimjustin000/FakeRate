@@ -1,6 +1,6 @@
 # Fake Rate Changelog
 ## v1.3.1 (2024-07-30)
-- Fixed Grandpa Demon's Infinity Demon sprite
+- Added Grandpa Demon's Infinity sprite
 - Adjusted Demons In Between difficulties
 - Fixed an issue with overlapping demons
 
