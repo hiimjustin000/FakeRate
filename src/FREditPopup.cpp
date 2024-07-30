@@ -38,6 +38,11 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
         m_grdSprite->setPosition({ 60.0f, 105.0f });
         m_grdSprite->setVisible(false);
         m_mainLayer->addChild(m_grdSprite);
+
+        m_grdInfinity = FREffects::grdInfinity();
+        m_grdInfinity->setPosition({ 59.6f, 119.0f });
+        m_grdInfinity->setVisible(false);
+        m_mainLayer->addChild(m_grdInfinity, 30);
     }
     if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between")) {
         m_dibSprite = CCSprite::createWithSpriteFrameName("hiimjustin000.demons_in_between/DIB_01_btn2_001.png");
@@ -199,7 +204,6 @@ void FREditPopup::updateLabels() {
         coins[i]->setPositionY(m_difficultySprite->getPositionY() - 31.5f - (m_stars != 0 ? 14.0f : 0.0f) - (m_difficulty > 5 ? 9.0f : 0.0f));
         coins[i]->setColor(m_coins ? ccColor3B { 255, 255, 255 } : ccColor3B { 255, 175, 75 });
     }
-    auto difficultyVisible = true;
     m_difficultySprite->setOpacity(255);
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         if (m_moreDifficultiesOverride == 4 || m_moreDifficultiesOverride == 7 || m_moreDifficultiesOverride == 9) {
@@ -217,6 +221,8 @@ void FREditPopup::updateLabels() {
                 fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", m_grandpaDemonOverride - 1).c_str()));
             m_grdSprite->setPosition(m_difficultySprite->getPosition());
             m_grdSprite->setVisible(true);
+            m_grdInfinity->setPosition(m_difficultySprite->getPosition() + CCPoint { -0.4f, 14.0f });
+            m_grdInfinity->setVisible(m_grandpaDemonOverride == 5);
             m_difficultySprite->setOpacity(0);
         }
         else m_grdSprite->setVisible(false);
@@ -587,10 +593,10 @@ bool FRDIBPopup::setup(int difficulty, int demonsInBetweenOverride, SetDIBCallba
         auto diff = 0;
         switch (m_demonsInBetweenOverride) {
             case 1: case 2: case 3: case 4: diff = 7; break;
-            case 5: case 6: case 7: case 8: diff = 8; break;
-            case 9: case 10: case 11: case 12: diff = 6; break;
-            case 13: case 14: case 15: case 16: diff = 9; break;
-            case 17: case 18: case 19: case 20: diff = 10; break;
+            case 5: case 6: case 7: case 8: case 9: diff = 8; break;
+            case 10: case 11: case 12: case 13: diff = 6; break;
+            case 14: case 15: case 16: case 17: diff = 9; break;
+            case 18: case 19: case 20: diff = 10; break;
         }
         callback(diff, m_demonsInBetweenOverride);
         onClose(nullptr);

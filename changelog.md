@@ -1,4 +1,9 @@
 # Fake Rate Changelog
+## v1.3.1 (2024-07-30)
+- Fixed Grandpa Demon's Infinity Demon sprite
+- Adjusted Demons In Between difficulties
+- Fixed an issue with overlapping demons
+
 ## v1.3.0 (2024-07-25)
 - Added Grandpa Demon and Demons In Between support
 - Added the ability to customize coin verification status

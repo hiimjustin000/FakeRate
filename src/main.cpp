@@ -86,11 +86,11 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             .coins = coins
         };
 
-        auto hideDifficulty = false;
+        auto hide = false;
         if (auto betweenDifficultySprite = static_cast<CCSprite*>(getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"))) {
             betweenDifficultySprite->setVisible(remove);
             m_difficultySprite->setOpacity(remove ? 0 : 255);
-            hideDifficulty = remove || hideDifficulty;
+            hide = remove || hide;
             m_fields->m_fakeRateData.demonsInBetweenOverride = remove ? FakeRate::getDIBOverride(betweenDifficultySprite) : dbo;
         }
         auto gddpOverride = false;
@@ -98,7 +98,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             gddpOverride = gddpDifficultySprite->isVisible();
             gddpDifficultySprite->setVisible(remove);
             m_difficultySprite->setOpacity(remove ? 0 : 255);
-            hideDifficulty = remove || hideDifficulty;
+            hide = remove || hide;
         }
         if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && !gddpOverride) {
             removeChildByTag(69420);
@@ -113,7 +113,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             if (auto grdInfinity = getChildByID("grd-infinity")) grdInfinity->setVisible(remove);
             m_difficultySprite->setVisible(true);
             m_difficultySprite->setOpacity(hasDemon && remove ? 0 : 255);
-            hideDifficulty = hasDemon && remove || hideDifficulty;
+            hide = (hasDemon && remove) || hide;
             if (auto featureGlow = m_difficultySprite->getChildByTag(69420))
                 featureGlow->setPosition(m_difficultySprite->getContentSize() / 2);
             m_fields->m_fakeRateData.grandpaDemonOverride = hasDemon && remove ? FakeRate::getGRDOverride(static_cast<CCSprite*>(getChildByID("grd-difficulty"))) : gdo;
@@ -175,16 +175,25 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         }
         if (m_exactLengthLabel->isVisible()) m_exactLengthLabel->setPositionY(m_lengthLabel->getPositionY() - 14.0f);
 
-        m_difficultySprite->setOpacity(hideDifficulty ? 0 : 255);
-        if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(mdo, remove);
+        m_difficultySprite->setOpacity(hide ? 0 : 255);
+        if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(mdo, remove, hide);
         if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && gdo > 0 && gdo < 7) {
             auto grdSprite = CCSprite::createWithSpriteFrameName(fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", gdo - 1).c_str());
             grdSprite->setID("grandpa-demon-sprite"_spr);
             grdSprite->setPosition(position);
             addChild(grdSprite, 3);
+            if (gdo == 5) {
+                auto grdInfinity = FREffects::grdInfinity();
+                grdInfinity->setID("grandpa-demon-infinity"_spr);
+                grdInfinity->setPosition(position + CCPoint { -0.4f, 14.0f });
+                addChild(grdInfinity, 30);
+            } else if (auto grdInfinity = getChildByID("grandpa-demon-infinity"_spr)) grdInfinity->removeFromParent();
             m_difficultySprite->setOpacity(0);
         }
-        else if (auto grdSprite = getChildByID("grandpa-demon-sprite"_spr)) grdSprite->removeFromParentAndCleanup(true);
+        else if (auto grdSprite = getChildByID("grandpa-demon-sprite"_spr)) {
+            grdSprite->removeFromParent();
+            if (auto grdInfinity = getChildByID("grandpa-demon-infinity"_spr)) grdInfinity->removeFromParent();
+        }
         if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && dbo > 0 && dbo < 21) {
             auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn2_001.png", dbo).c_str());
             dibSprite->setID("between-difficulty-sprite"_spr);
@@ -192,17 +201,17 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             addChild(dibSprite, 3);
             m_difficultySprite->setOpacity(0);
         }
-        else if (auto dibSprite = getChildByID("between-difficulty-sprite"_spr)) dibSprite->removeFromParentAndCleanup(true);
+        else if (auto dibSprite = getChildByID("between-difficulty-sprite"_spr)) dibSprite->removeFromParent();
     }
 
-    void fixMoreDifficultiesIncompatibility(int mdo, bool remove) {
+    void fixMoreDifficultiesIncompatibility(int mdo, bool remove, bool hide) {
         auto spriteName = std::string();
         auto moreDifficultiesSprite = static_cast<CCSprite*>(getChildByID("uproxide.more_difficulties/more-difficulties-spr"));
         if (moreDifficultiesSprite) {
             moreDifficultiesSprite->setVisible(false);
             spriteName = FakeRate::getSpriteName(moreDifficultiesSprite);
         }
-        m_difficultySprite->setOpacity(255);
+        m_difficultySprite->setOpacity(hide ? 0 : 255);
 
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         auto frameName = "";
@@ -378,6 +387,12 @@ class $modify(FRLevelCell, LevelCell) {
                     grdSprite->setID("grandpa-demon-sprite"_spr);
                     grdSprite->setPosition(position);
                     difficultyContainer->addChild(grdSprite, 3);
+                    if (gdo == 5) {
+                        auto grdInfinity = FREffects::grdInfinity();
+                        grdInfinity->setID("grandpa-demon-infinity"_spr);
+                        grdInfinity->setPosition(position + CCPoint { -0.4f, 14.0f });
+                        difficultyContainer->addChild(grdInfinity, 30);
+                    }
                     difficultySprite->setOpacity(0);
                 }
                 auto dbo = fakeRateData.demonsInBetweenOverride;

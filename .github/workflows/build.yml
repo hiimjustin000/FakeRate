@@ -33,12 +33,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build the mod
-        uses: hiimjustin000/build-geode-mod@commit-hash
+        uses: geode-sdk/build-geode-mod@main
         with:
           build-config: RelWithDebInfo
           export-pdb: true
-          sdk: 49c8d38
-          cli: nightly
           combine: true
           target: ${{ matrix.config.target }}
 

@@ -1,4 +1,4 @@
-#include "FakeRate.hpp"
+#include "FREffects.hpp"
 
 typedef MiniFunction<void(FakeRateSaveData, bool)> UpdateFakeRateCallback;
 typedef MiniFunction<void(int, int, int, int)> SetDifficultyCallback;
@@ -20,6 +20,7 @@ protected:
     GJDifficultySprite* m_difficultySprite;
     CCSprite* m_mdSprite;
     CCSprite* m_grdSprite;
+    CCSprite* m_grdInfinity;
     CCSprite* m_dibSprite;
     CCSprite* m_starSprite;
     CCLabelBMFont* m_starsLabel;
