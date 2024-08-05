@@ -208,7 +208,7 @@ void FREditPopup::updateLabels() {
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         if (m_moreDifficultiesOverride == 4 || m_moreDifficultiesOverride == 7 || m_moreDifficultiesOverride == 9) {
             m_mdSprite->setDisplayFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
-                fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}.png{}", m_moreDifficultiesOverride, m_legacy ? "_Legacy" : "").c_str()));
+                fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}{}.png", m_moreDifficultiesOverride, m_legacy ? "_Legacy" : "").c_str()));
             m_mdSprite->setPosition(m_difficultySprite->getPosition() + (m_legacy ? CCPoint { 0.0f, 0.0f } : CCPoint { 0.25f, -0.1f }));
             m_mdSprite->setVisible(true);
             m_difficultySprite->setOpacity(0);

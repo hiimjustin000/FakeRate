@@ -1,4 +1,8 @@
 # Fake Rate Changelog
+## v1.3.2 (2024-08-05)
+- Fixed a bug with legacy More Difficulties difficulties not displaying correctly in the fake rate popup
+- Fixed a bug with auto levels not displaying difficulty faces correctly in the fake rate popup
+
 ## v1.3.1 (2024-07-30)
 - Added Grandpa Demon's Infinity sprite
 - Adjusted Demons In Between difficulties

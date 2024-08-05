@@ -17,6 +17,7 @@ int FakeRate::getBaseCurrency(int stars) {
 
 int FakeRate::getDifficultyFromLevel(GJGameLevel* level) {
     if (level->m_demon > 0) return level->m_demonDifficulty > 0 ? level->m_demonDifficulty + 4 : 6;
+    else if (level->m_autoLevel) return -1;
     else if (level->m_ratings < 5) return 0;
     else return level->m_ratingsSum / level->m_ratings;
 }
