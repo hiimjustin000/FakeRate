@@ -77,6 +77,8 @@ jobs:
             echo "Release found for ${{ steps.version.outputs.version }}, skipping release"
             echo release=0 >> $GITHUB_OUTPUT
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Find Changelog
         if: steps.check.outputs.release == '1'
