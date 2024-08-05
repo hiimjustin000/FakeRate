@@ -88,11 +88,6 @@ jobs:
           # Why does Copilot want to remove EVERY newline? I only want the last one gone.
           echo changelog=$(awk "/## ${{ steps.version.outputs.version }}/{flag=1; next} /##/{flag=0} flag" changelog.md | sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba') >> $GITHUB_OUTPUT
 
-      - name: Remove Trailing Newline
-        if: steps.check.outputs.release == '1'
-        run: |
-          sed -i -z 's/\n$//' $GITHUB_OUTPUT
-
       - name: Download Build Output
         if: steps.check.outputs.release == '1'
         uses: actions/download-artifact@v4
