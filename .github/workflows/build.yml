@@ -85,7 +85,6 @@ jobs:
         id: changelog
         run: |
           curl -s https://raw.githubusercontent.com/${{ github.repository }}/master/changelog.md -o changelog.md
-          # Why does Copilot want to remove EVERY newline? I only want the last one gone.
           echo changelog=$(awk "/## ${{ steps.version.outputs.version }}/{flag=1; next} /##/{flag=0} flag" changelog.md | sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba') >> $GITHUB_OUTPUT
 
       - name: Download Build Output
