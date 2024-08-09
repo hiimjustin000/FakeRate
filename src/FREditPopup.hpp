@@ -2,11 +2,12 @@
 
 typedef MiniFunction<void(FakeRateSaveData, bool)> UpdateFakeRateCallback;
 typedef MiniFunction<void(int, int, int, int)> SetDifficultyCallback;
+typedef MiniFunction<void(int)> SetStarsCallback;
 typedef MiniFunction<void(int)> SetFeatureCallback;
 typedef MiniFunction<void(int)> SetGRDCallback;
-typedef MiniFunction<void(int, int)> SetDIBCallback;
+typedef MiniFunction<void(int)> SetDIBCallback;
 
-class FREditPopup : public Popup<GJGameLevel*, FakeRateSaveData, UpdateFakeRateCallback>, SetIDPopupDelegate {
+class FREditPopup : public Popup<GJGameLevel*, FakeRateSaveData, UpdateFakeRateCallback> {
 protected:
     GJGameLevel* m_level;
     int m_stars;
@@ -31,8 +32,6 @@ protected:
 public:
     static FREditPopup* create(GJGameLevel*, FakeRateSaveData, UpdateFakeRateCallback);
 
-    void setIDPopupClosed(SetIDPopup*, int) override;
-
     ~FREditPopup() override;
 };
 
@@ -49,6 +48,16 @@ protected:
     void createDifficultyToggle(CCMenu*, int, int);
 public:
     static FRSetDifficultyPopup* create(int, int, int, int, bool, SetDifficultyCallback);
+};
+
+class FRSetStarsPopup : public Popup<int, SetStarsCallback> {
+protected:
+    int m_stars;
+    TextInput* m_input;
+
+    bool setup(int, SetStarsCallback) override;
+public:
+    static FRSetStarsPopup* create(int, SetStarsCallback);
 };
 
 class FRSetFeaturePopup : public Popup<int, int, int, int, int, bool, SetFeatureCallback> {
@@ -78,14 +87,13 @@ public:
     static FRGRDPopup* create(int, SetGRDCallback);
 };
 
-class FRDIBPopup : public Popup<int, int, SetDIBCallback> {
+class FRDIBPopup : public Popup<int, SetDIBCallback> {
 protected:
-    int m_difficulty;
     int m_demonsInBetweenOverride;
     CCMenuItemSpriteExtra* m_selected;
 
-    bool setup(int, int, SetDIBCallback) override;
-    void createDIBToggle(CCMenu*, int, int);
+    bool setup(int, SetDIBCallback) override;
+    void createDIBToggle(CCMenu*, int);
 public:
-    static FRDIBPopup* create(int, int, SetDIBCallback);
+    static FRDIBPopup* create(int, SetDIBCallback);
 };

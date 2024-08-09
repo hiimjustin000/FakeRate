@@ -1,4 +1,10 @@
 # Fake Rate Changelog
+## v1.3.3 (2024-08-09)
+- Removed override difficulty constraints
+- Expanded star limit from -128/127 to -2147483648/2147483647
+- Fixed a bug where the Demons In Between popup would crash if the difficulty was not a demon
+- Fixed an overlapping issue with more difficulties and other overrides
+
 ## v1.3.2 (2024-08-05)
 - Fixed a bug with legacy More Difficulties difficulties not displaying correctly in the fake rate popup
 - Fixed a bug with auto levels not displaying difficulty faces correctly in the fake rate popup

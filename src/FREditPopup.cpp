@@ -84,10 +84,10 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
     m_buttonMenu->addChild(difficultyButton);
 
     auto starsButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Stars", "goldFont.fnt", "GJ_button_02.png", 0.8f), [this, data](auto) {
-        auto popup = SetIDPopup::create(m_stars, -128, 127, "Set Stars", "Set", true, data.stars, 0.0f, false, false);
-        popup->m_inputNode->setAllowedChars("0123456789-");
-        popup->m_delegate = this;
-        popup->show();
+        FRSetStarsPopup::create(m_stars, [this](int stars) {
+            m_stars = stars;
+            updateLabels();
+        })->show();
     });
     starsButton->setPosition(200.0f, 110.0f);
     m_buttonMenu->addChild(starsButton);
@@ -185,23 +185,19 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
     return true;
 }
 
-void FREditPopup::setIDPopupClosed(SetIDPopup*, int stars) {
-    m_stars = stars;
-    updateLabels();
-}
-
 void FREditPopup::updateLabels() {
     m_difficultySprite->updateFeatureState((GJFeatureState)m_feature);
     m_difficultySprite->updateDifficultyFrame(m_difficulty, GJDifficultyName::Long);
-    m_difficultySprite->setPositionY(100.0f + (m_difficulty > 5 ? 5.0f : 0.0f) + (m_stars != 0 ? 10.0f : 0.0f));
-    m_starSprite->setPosition({ m_difficultySprite->getPositionX() + 8.0f, m_difficultySprite->getPositionY() - 30.0f - (m_difficulty > 5 ? 9.0f : 0.0f) });
+    auto isDemon = m_difficulty > 5 || m_grandpaDemonOverride > 0 || m_demonsInBetweenOverride > 0;
+    m_difficultySprite->setPositionY(100.0f + (isDemon ? 5.0f : 0.0f) + (m_stars != 0 ? 10.0f : 0.0f));
+    m_starSprite->setPosition({ m_difficultySprite->getPositionX() + 8.0f, m_difficultySprite->getPositionY() - 30.0f - (isDemon ? 9.0f : 0.0f) });
     m_starSprite->setVisible(m_stars != 0);
     m_starsLabel->setPosition(m_starSprite->getPositionX() - 8.0f, m_starSprite->getPositionY());
     m_starsLabel->setString(std::to_string(m_stars).c_str());
     m_starsLabel->setVisible(m_stars != 0);
     auto coins = reinterpret_cast<CCSprite**>(m_coinSprites->data->arr);
     for (int i = 0; i < m_level->m_coins; i++) {
-        coins[i]->setPositionY(m_difficultySprite->getPositionY() - 31.5f - (m_stars != 0 ? 14.0f : 0.0f) - (m_difficulty > 5 ? 9.0f : 0.0f));
+        coins[i]->setPositionY(m_difficultySprite->getPositionY() - 31.5f - (m_stars != 0 ? 14.0f : 0.0f) - (isDemon ? 9.0f : 0.0f));
         coins[i]->setColor(m_coins ? ccColor3B { 255, 255, 255 } : ccColor3B { 255, 175, 75 });
     }
     m_difficultySprite->setOpacity(255);
@@ -221,6 +217,7 @@ void FREditPopup::updateLabels() {
                 fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", m_grandpaDemonOverride - 1).c_str()));
             m_grdSprite->setPosition(m_difficultySprite->getPosition());
             m_grdSprite->setVisible(true);
+            m_mdSprite->setVisible(false);
             m_grdInfinity->setPosition(m_difficultySprite->getPosition() + CCPoint { -0.4f, 14.0f });
             m_grdInfinity->setVisible(m_grandpaDemonOverride == 5);
             m_difficultySprite->setOpacity(0);
@@ -233,6 +230,7 @@ void FREditPopup::updateLabels() {
                 fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn2_001.png", m_demonsInBetweenOverride).c_str()));
             m_dibSprite->setPosition(m_difficultySprite->getPosition() + FakeRate::getDIBOffset(m_demonsInBetweenOverride, GJDifficultyName::Long));
             m_dibSprite->setVisible(true);
+            m_mdSprite->setVisible(false);
             m_difficultySprite->setOpacity(0);
         }
         else m_dibSprite->setVisible(false);
@@ -255,6 +253,7 @@ FRSetDifficultyPopup* FRSetDifficultyPopup::create(int difficulty, int mdo, int 
 
 bool FRSetDifficultyPopup::setup(int difficulty, int mdo, int gdo, int dbo, bool legacy, SetDifficultyCallback callback) {
     setTitle("Select Difficulty");
+    m_noElasticity = true;
     m_difficulty = difficulty;
     m_moreDifficultiesOverride = mdo;
     m_grandpaDemonOverride = gdo;
@@ -277,7 +276,6 @@ bool FRSetDifficultyPopup::setup(int difficulty, int mdo, int gdo, int dbo, bool
     menuRow3->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     menuRow3->setPosition(150.0f, 80.0f);
     menuRow3->setContentSize({ 300.0f, 65.0f });
-    menuRow3->setTag(3);
     m_mainLayer->addChild(menuRow3);
 
     createDifficultyToggle(menuRow1, 0, 0);
@@ -312,13 +310,8 @@ bool FRSetDifficultyPopup::setup(int difficulty, int mdo, int gdo, int dbo, bool
     if (Loader::get()->isModLoaded("itzkiba.grandpa_demon")) {
         auto grdButton = CCMenuItemExt::createSpriteExtraWithFilename("FR_grdBtn_001.png"_spr, 0.65f, [this](auto) {
             FRGRDPopup::create(m_grandpaDemonOverride, [this](int grd) {
-                m_difficulty = 10;
                 m_grandpaDemonOverride = grd;
                 m_demonsInBetweenOverride = 0;
-                auto sender = static_cast<CCMenuItemSpriteExtra*>(m_mainLayer->getChildByTag(3)->getChildByTag(10));
-                FakeRate::toggle(m_selected->getNormalImage(), false);
-                FakeRate::toggle(sender->getNormalImage(), true);
-                m_selected = sender;
             })->show();
         });
         grdButton->setPosition(275.0f - (demonsInBetween ? 30.0f : 0.0f), 25.0f);
@@ -326,14 +319,9 @@ bool FRSetDifficultyPopup::setup(int difficulty, int mdo, int gdo, int dbo, bool
     }
     if (demonsInBetween) {
         auto dibButton = CCMenuItemExt::createSpriteExtraWithFilename("FR_dibBtn_001.png"_spr, 0.75f, [this](auto) {
-            FRDIBPopup::create(m_difficulty, m_demonsInBetweenOverride, [this](int diff, int dib) {
-                m_difficulty = diff;
+            FRDIBPopup::create(m_demonsInBetweenOverride, [this](int dib) {
                 m_grandpaDemonOverride = 0;
                 m_demonsInBetweenOverride = dib;
-                auto sender = static_cast<CCMenuItemSpriteExtra*>(m_mainLayer->getChildByTag(3)->getChildByTag(diff));
-                FakeRate::toggle(m_selected->getNormalImage(), false);
-                FakeRate::toggle(sender->getNormalImage(), true);
-                m_selected = sender;
             })->show();
         });
         dibButton->setPosition(275.0f, 25.0f);
@@ -354,25 +342,68 @@ void FRSetDifficultyPopup::createDifficultyToggle(CCMenu* menu, int difficulty, 
         if (sender == m_selected) return;
         m_difficulty = difficulty;
         m_moreDifficultiesOverride = moreDifficultiesOverride;
-        if (m_difficulty < 10 && m_grandpaDemonOverride > 0) m_grandpaDemonOverride = 0;
-        if (m_difficulty < 6 && m_demonsInBetweenOverride > 0) m_demonsInBetweenOverride = 0;
-        else if (m_difficulty > 5 && m_demonsInBetweenOverride > 0) switch (m_difficulty) {
-            case 7: m_demonsInBetweenOverride = 4; break;
-            case 8: m_demonsInBetweenOverride = 7; break;
-            case 6: m_demonsInBetweenOverride = 11; break;
-            case 9: m_demonsInBetweenOverride = 15; break;
-            case 10: m_demonsInBetweenOverride = 20; break;
-            default: m_demonsInBetweenOverride = 0; break;
-        }
         FakeRate::toggle(m_selected->getNormalImage(), false);
         FakeRate::toggle(sender->getNormalImage(), true);
         m_selected = sender;
     });
-    if (difficulty > 5) toggle->setTag(difficulty);
     auto isToggled = moreDifficultiesOverride == m_moreDifficultiesOverride && (m_moreDifficultiesOverride <= 0 ? difficulty == m_difficulty : true);
     FakeRate::toggle(toggle->getNormalImage(), isToggled);
     m_selected = isToggled ? toggle : m_selected;
     menu->addChild(toggle);
+}
+
+FRSetStarsPopup* FRSetStarsPopup::create(int stars, SetStarsCallback callback) {
+    auto ret = new FRSetStarsPopup();
+    if (ret->initAnchored(250.0f, 150.0f, stars, callback)) {
+        ret->autorelease();
+        return ret;
+    }
+    delete ret;
+    return nullptr;
+}
+
+bool FRSetStarsPopup::setup(int stars, SetStarsCallback callback) {
+    setTitle("Set Stars");
+    m_noElasticity = true;
+    m_stars = stars;
+
+    m_input = TextInput::create(150.0f, "Stars");
+    m_input->setCommonFilter(CommonFilter::Int);
+    m_input->setPosition(125.0f, 80.0f);
+    m_input->getInputNode()->setLabelPlaceholderColor({ 120, 170, 240 });
+    m_input->setString(std::to_string(m_stars));
+    m_input->setCallback([this](std::string const& text) {
+        auto stars = (text.empty() || text == "-" || (text.find('-') != std::string::npos && !string::startsWith(text, "-"))) ? 0 : std::stoll(text);
+        if (stars < INT_MIN) stars = INT_MIN;
+        if (stars > INT_MAX) stars = INT_MAX;
+        m_stars = stars;
+        auto starsStr = std::to_string(m_stars);
+        if (starsStr != text) m_input->setString(starsStr);
+    });
+    m_mainLayer->addChild(m_input);
+
+    auto leftButton = CCMenuItemExt::createSpriteExtraWithFrameName("edit_leftBtn_001.png", 1.1f, [this](auto) {
+        if (m_stars != INT_MIN) m_stars -= 1;
+        m_input->setString(std::to_string(m_stars));
+    });
+    leftButton->setPosition(30.0f, 80.0f);
+    m_buttonMenu->addChild(leftButton);
+
+    auto rightButton = CCMenuItemExt::createSpriteExtraWithFrameName("edit_rightBtn_001.png", 1.1f, [this](auto) {
+        if (m_stars != INT_MAX) m_stars += 1;
+        m_input->setString(std::to_string(m_stars));
+    });
+    rightButton->setPosition(220.0f, 80.0f);
+    m_buttonMenu->addChild(rightButton);
+
+    auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
+        callback(m_stars);
+        onClose(nullptr);
+    });
+    confirmButton->setPosition(125.0f, 25.0f);
+    m_buttonMenu->addChild(confirmButton);
+
+    return true;
 }
 
 FRSetFeaturePopup* FRSetFeaturePopup::create(int feature, int difficulty, int mdo, int gdo, int dbo, bool legacy, SetFeatureCallback callback) {
@@ -387,6 +418,7 @@ FRSetFeaturePopup* FRSetFeaturePopup::create(int feature, int difficulty, int md
 
 bool FRSetFeaturePopup::setup(int feature, int difficulty, int mdo, int gdo, int dbo, bool legacy, SetFeatureCallback callback) {
     setTitle("Select Feature");
+    m_noElasticity = true;
     m_feature = static_cast<GJFeatureState>(feature);
     m_difficulty = difficulty;
     m_moreDifficultiesOverride = mdo;
@@ -420,7 +452,7 @@ bool FRSetFeaturePopup::setup(int feature, int difficulty, int mdo, int gdo, int
 void FRSetFeaturePopup::createFeatureToggle(CCMenu* menu, GJFeatureState feature) {
     auto difficultySprite = GJDifficultySprite::create(m_difficulty, GJDifficultyName::Long);
     difficultySprite->updateFeatureState(feature);
-    if (Loader::get()->isModLoaded("uproxide.more_difficulties") && m_moreDifficultiesOverride > 0) {
+    if (Loader::get()->isModLoaded("uproxide.more_difficulties") && m_moreDifficultiesOverride > 0 && m_grandpaDemonOverride == 0 && m_demonsInBetweenOverride == 0) {
         auto mdSprite = CCSprite::createWithSpriteFrameName((m_legacy ? fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}_Legacy.png", m_moreDifficultiesOverride)
             : fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}.png", m_moreDifficultiesOverride)).c_str());
         difficultySprite->addChild(mdSprite);
@@ -466,6 +498,7 @@ FRGRDPopup* FRGRDPopup::create(int grandpaDemonOverride, SetGRDCallback callback
 
 bool FRGRDPopup::setup(int grandpaDemonOverride, SetGRDCallback callback) {
     setTitle("Grandpa Demon");
+    m_noElasticity = true;
     m_grandpaDemonOverride = grandpaDemonOverride;
 
     auto menuRow1 = CCMenu::create();
@@ -503,20 +536,19 @@ bool FRGRDPopup::setup(int grandpaDemonOverride, SetGRDCallback callback) {
 void FRGRDPopup::createGRDToggle(CCMenu* menu, int grandpaDemonOverride) {
     auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", grandpaDemonOverride - 1).c_str(), 1.0f,
         [this, grandpaDemonOverride](CCMenuItemSpriteExtra* sender) {
-            if (sender == m_selected) return;
-            m_grandpaDemonOverride = grandpaDemonOverride;
+            m_grandpaDemonOverride = sender != m_selected ? grandpaDemonOverride : 0;
             if (m_selected) FakeRate::toggle(m_selected->getNormalImage(), false);
-            FakeRate::toggle(sender->getNormalImage(), true);
-            m_selected = sender;
+            if (sender != m_selected) FakeRate::toggle(sender->getNormalImage(), true);
+            m_selected = sender != m_selected ? sender : nullptr;
         });
     FakeRate::toggle(toggle->getNormalImage(), grandpaDemonOverride == m_grandpaDemonOverride);
     m_selected = grandpaDemonOverride == m_grandpaDemonOverride ? toggle : m_selected;
     menu->addChild(toggle);
 }
 
-FRDIBPopup* FRDIBPopup::create(int difficulty, int demonsInBetweenOverride, SetDIBCallback callback) {
+FRDIBPopup* FRDIBPopup::create(int demonsInBetweenOverride, SetDIBCallback callback) {
     auto ret = new FRDIBPopup();
-    if (ret->initAnchored(350.0f, 310.0f, difficulty, demonsInBetweenOverride, callback)) {
+    if (ret->initAnchored(350.0f, 310.0f, demonsInBetweenOverride, callback)) {
         ret->autorelease();
         return ret;
     }
@@ -524,18 +556,10 @@ FRDIBPopup* FRDIBPopup::create(int difficulty, int demonsInBetweenOverride, SetD
     return nullptr;
 }
 
-bool FRDIBPopup::setup(int difficulty, int demonsInBetweenOverride, SetDIBCallback callback) {
+bool FRDIBPopup::setup(int demonsInBetweenOverride, SetDIBCallback callback) {
     setTitle("Demons In Between");
-    m_difficulty = difficulty;
+    m_noElasticity = true;
     m_demonsInBetweenOverride = demonsInBetweenOverride;
-    if (demonsInBetweenOverride <= 0) switch (m_difficulty) {
-        case 7: m_demonsInBetweenOverride = 4; break;
-        case 8: m_demonsInBetweenOverride = 7; break;
-        case 6: m_demonsInBetweenOverride = 11; break;
-        case 9: m_demonsInBetweenOverride = 15; break;
-        case 10: m_demonsInBetweenOverride = 20; break;
-        default: m_demonsInBetweenOverride = 0; break;
-    }
 
     auto menuRow1 = CCMenu::create();
     menuRow1->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
@@ -543,11 +567,11 @@ bool FRDIBPopup::setup(int difficulty, int demonsInBetweenOverride, SetDIBCallba
     menuRow1->setContentSize({ 350.0f, 60.0f });
     m_mainLayer->addChild(menuRow1);
 
-    createDIBToggle(menuRow1, 1, 0);
-    createDIBToggle(menuRow1, 2, 0);
-    createDIBToggle(menuRow1, 3, 0);
-    createDIBToggle(menuRow1, 4, 7);
-    createDIBToggle(menuRow1, 5, 0);
+    createDIBToggle(menuRow1, 1);
+    createDIBToggle(menuRow1, 2);
+    createDIBToggle(menuRow1, 3);
+    createDIBToggle(menuRow1, 4);
+    createDIBToggle(menuRow1, 5);
     menuRow1->updateLayout();
 
     auto menuRow2 = CCMenu::create();
@@ -556,11 +580,11 @@ bool FRDIBPopup::setup(int difficulty, int demonsInBetweenOverride, SetDIBCallba
     menuRow2->setContentSize({ 350.0f, 60.0f });
     m_mainLayer->addChild(menuRow2);
 
-    createDIBToggle(menuRow2, 6, 0);
-    createDIBToggle(menuRow2, 7, 8);
-    createDIBToggle(menuRow2, 8, 0);
-    createDIBToggle(menuRow2, 9, 0);
-    createDIBToggle(menuRow2, 10, 0);
+    createDIBToggle(menuRow2, 6);
+    createDIBToggle(menuRow2, 7);
+    createDIBToggle(menuRow2, 8);
+    createDIBToggle(menuRow2, 9);
+    createDIBToggle(menuRow2, 10);
     menuRow2->updateLayout();
 
     auto menuRow3 = CCMenu::create();
@@ -569,11 +593,11 @@ bool FRDIBPopup::setup(int difficulty, int demonsInBetweenOverride, SetDIBCallba
     menuRow3->setContentSize({ 350.0f, 60.0f });
     m_mainLayer->addChild(menuRow3);
 
-    createDIBToggle(menuRow3, 11, 6);
-    createDIBToggle(menuRow3, 12, 0);
-    createDIBToggle(menuRow3, 13, 0);
-    createDIBToggle(menuRow3, 14, 0);
-    createDIBToggle(menuRow3, 15, 9);
+    createDIBToggle(menuRow3, 11);
+    createDIBToggle(menuRow3, 12);
+    createDIBToggle(menuRow3, 13);
+    createDIBToggle(menuRow3, 14);
+    createDIBToggle(menuRow3, 15);
     menuRow3->updateLayout();
 
     auto menuRow4 = CCMenu::create();
@@ -582,23 +606,15 @@ bool FRDIBPopup::setup(int difficulty, int demonsInBetweenOverride, SetDIBCallba
     menuRow4->setContentSize({ 350.0f, 60.0f });
     m_mainLayer->addChild(menuRow4);
 
-    createDIBToggle(menuRow4, 16, 0);
-    createDIBToggle(menuRow4, 17, 0);
-    createDIBToggle(menuRow4, 18, 0);
-    createDIBToggle(menuRow4, 19, 0);
-    createDIBToggle(menuRow4, 20, 10);
+    createDIBToggle(menuRow4, 16);
+    createDIBToggle(menuRow4, 17);
+    createDIBToggle(menuRow4, 18);
+    createDIBToggle(menuRow4, 19);
+    createDIBToggle(menuRow4, 20);
     menuRow4->updateLayout();
 
     auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
-        auto diff = 0;
-        switch (m_demonsInBetweenOverride) {
-            case 1: case 2: case 3: case 4: diff = 7; break;
-            case 5: case 6: case 7: case 8: case 9: diff = 8; break;
-            case 10: case 11: case 12: case 13: diff = 6; break;
-            case 14: case 15: case 16: case 17: diff = 9; break;
-            case 18: case 19: case 20: diff = 10; break;
-        }
-        callback(diff, m_demonsInBetweenOverride);
+        callback(m_demonsInBetweenOverride);
         onClose(nullptr);
     });
     confirmButton->setPosition(175.0f, 25.0f);
@@ -607,17 +623,15 @@ bool FRDIBPopup::setup(int difficulty, int demonsInBetweenOverride, SetDIBCallba
     return true;
 }
 
-void FRDIBPopup::createDIBToggle(CCMenu* menu, int demonsInBetweenOverride, int difficulty) {
+void FRDIBPopup::createDIBToggle(CCMenu* menu, int demonsInBetweenOverride) {
     auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02}_btn2_001.png", demonsInBetweenOverride).c_str(),
         1.0f, [this, demonsInBetweenOverride](CCMenuItemSpriteExtra* sender) {
-            if (sender == m_selected) return;
-            m_demonsInBetweenOverride = demonsInBetweenOverride;
+            m_demonsInBetweenOverride = sender != m_selected ? demonsInBetweenOverride : 0;
             if (m_selected) FakeRate::toggle(m_selected->getNormalImage(), false);
-            FakeRate::toggle(sender->getNormalImage(), true);
-            m_selected = sender;
+            if (sender != m_selected) FakeRate::toggle(sender->getNormalImage(), true);
+            m_selected = sender != m_selected ? sender : nullptr;
         });
-    auto isToggled = m_difficulty > 5 && (m_demonsInBetweenOverride <= 0 ? difficulty == m_difficulty : demonsInBetweenOverride == m_demonsInBetweenOverride);
-    FakeRate::toggle(toggle->getNormalImage(), isToggled);
-    m_selected = isToggled ? toggle : m_selected;
+    FakeRate::toggle(toggle->getNormalImage(), demonsInBetweenOverride == m_demonsInBetweenOverride);
+    m_selected = demonsInBetweenOverride == m_demonsInBetweenOverride ? toggle : m_selected;
     menu->addChild(toggle);
 }
