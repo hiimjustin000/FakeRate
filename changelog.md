@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.3.5 (2024-08-09)
+- Fixed a bug where the difficulty face would not display at all if a fake rate was set
+
 ## v1.3.4 (2024-08-09)
 - Fixed a bug where the game would crash if no More Difficulties difficulties were selected
 - Fixed an overlapping issue with more difficulties and other overrides (I didn't fix it in level cells LMFAO)

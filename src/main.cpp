@@ -402,10 +402,11 @@ class $modify(FRLevelCell, LevelCell) {
         if (!difficultyContainer) difficultyContainer = m_mainLayer->getChildByID("grd-demon-icon-layer");
         auto moreDifficultiesSprite = static_cast<CCSprite*>(difficultyContainer->getChildByID("uproxide.more_difficulties/more-difficulties-spr"));
         if (moreDifficultiesSprite) moreDifficultiesSprite->setVisible(false);
+
         auto difficultySprite = static_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
-        difficultySprite->setOpacity(0);
-        
+        difficultySprite->setOpacity(255);
         if (mdo != 4 || mdo != 7 || mdo != 9 || gdo > 0 || dbo > 0) return;
+        difficultySprite->setOpacity(0);
 
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         if (!moreDifficultiesSprite) {
