@@ -1,4 +1,8 @@
 # Fake Rate Changelog
+## v1.3.4 (2024-08-09)
+- Fixed a bug where the game would crash if no More Difficulties difficulties were selected
+- Fixed an overlapping issue with more difficulties and other overrides (I didn't fix it in level cells LMFAO)
+
 ## v1.3.3 (2024-08-09)
 - Removed override difficulty constraints
 - Expanded star limit from -128/127 to -2147483648/2147483647

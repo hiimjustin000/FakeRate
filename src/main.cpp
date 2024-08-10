@@ -215,7 +215,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         auto stars = m_level->m_stars.value();
         if (remove && stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9)) moreDifficultiesOverride = starsRequested;
         if (remove && stars == 4 || stars == 7 || stars == 9) moreDifficultiesOverride = stars;
-        if (moreDifficultiesOverride == 0 || gdo > 0 || dbo > 0) return;
+        if (moreDifficultiesOverride != 4 || moreDifficultiesOverride != 7 || moreDifficultiesOverride != 9 || gdo > 0 || dbo > 0) return;
 
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         if (!moreDifficultiesSprite) {
@@ -370,8 +370,9 @@ class $modify(FRLevelCell, LevelCell) {
                 }
 
                 auto& position = difficultySprite->getPosition();
-                if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(fakeRateData);
                 auto gdo = fakeRateData.grandpaDemonOverride;
+                auto dbo = fakeRateData.demonsInBetweenOverride;
+                if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(fakeRateData.moreDifficultiesOverride, gdo, dbo);
                 if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && gdo > 0 && gdo < 7) {
                     auto grdSprite = CCSprite::createWithSpriteFrameName(fmt::format("itzkiba.grandpa_demon/GrD_demon{}.png", gdo - 1).c_str());
                     grdSprite->setID("grandpa-demon-sprite"_spr);
@@ -385,7 +386,6 @@ class $modify(FRLevelCell, LevelCell) {
                     }
                     difficultySprite->setOpacity(0);
                 }
-                auto dbo = fakeRateData.demonsInBetweenOverride;
                 if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && dbo > 0 && dbo < 21) {
                     auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn_001.png", dbo).c_str());
                     dibSprite->setID("between-difficulty-sprite"_spr);
@@ -397,24 +397,26 @@ class $modify(FRLevelCell, LevelCell) {
         }
     }
 
-    void fixMoreDifficultiesIncompatibility(FakeRateSaveData const& fakeRateData) {
+    void fixMoreDifficultiesIncompatibility(int mdo, int gdo, int dbo) {
         auto difficultyContainer = m_mainLayer->getChildByID("difficulty-container");
         if (!difficultyContainer) difficultyContainer = m_mainLayer->getChildByID("grd-demon-icon-layer");
         auto moreDifficultiesSprite = static_cast<CCSprite*>(difficultyContainer->getChildByID("uproxide.more_difficulties/more-difficulties-spr"));
         if (moreDifficultiesSprite) moreDifficultiesSprite->setVisible(false);
         auto difficultySprite = static_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
         difficultySprite->setOpacity(0);
+        
+        if (mdo != 4 || mdo != 7 || mdo != 9 || gdo > 0 || dbo > 0) return;
 
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         if (!moreDifficultiesSprite) {
             moreDifficultiesSprite = CCSprite::createWithSpriteFrameName(fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}{}.png",
-                fakeRateData.moreDifficultiesOverride, legacy ? "_Legacy" : "").c_str());
+                mdo, legacy ? "_Legacy" : "").c_str());
             moreDifficultiesSprite->setID("uproxide.more_difficulties/more-difficulties-spr");
             difficultyContainer->addChild(moreDifficultiesSprite, 3);
         }
         else {
             moreDifficultiesSprite->setDisplayFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
-                fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}{}.png", fakeRateData.moreDifficultiesOverride, legacy ? "_Legacy" : "").c_str()));
+                fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}{}.png", mdo, legacy ? "_Legacy" : "").c_str()));
             moreDifficultiesSprite->setVisible(true);
         }
 
