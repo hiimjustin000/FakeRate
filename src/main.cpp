@@ -215,7 +215,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         auto stars = m_level->m_stars.value();
         if (remove && stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9)) moreDifficultiesOverride = starsRequested;
         if (remove && stars == 4 || stars == 7 || stars == 9) moreDifficultiesOverride = stars;
-        if (moreDifficultiesOverride != 4 || moreDifficultiesOverride != 7 || moreDifficultiesOverride != 9 || gdo > 0 || dbo > 0) return;
+        if ((moreDifficultiesOverride != 4 && moreDifficultiesOverride != 7 && moreDifficultiesOverride != 9) || gdo > 0 || dbo > 0) return;
 
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         if (!moreDifficultiesSprite) {
@@ -405,7 +405,7 @@ class $modify(FRLevelCell, LevelCell) {
 
         auto difficultySprite = static_cast<GJDifficultySprite*>(difficultyContainer->getChildByID("difficulty-sprite"));
         difficultySprite->setOpacity(255);
-        if (mdo != 4 || mdo != 7 || mdo != 9 || gdo > 0 || dbo > 0) return;
+        if ((mdo != 4 && mdo != 7 && mdo != 9) || gdo > 0 || dbo > 0) return;
         difficultySprite->setOpacity(0);
 
         auto legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");

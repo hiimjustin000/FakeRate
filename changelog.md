@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.3.6 (2024-08-10)
+- Fixed a bug where More Difficulties difficulties would not display ever
+
 ## v1.3.5 (2024-08-09)
 - Fixed a bug where the difficulty face would not display at all if a fake rate was set
 
