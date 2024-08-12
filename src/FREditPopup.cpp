@@ -342,6 +342,8 @@ void FRSetDifficultyPopup::createDifficultyToggle(CCMenu* menu, int difficulty, 
         if (sender == m_selected) return;
         m_difficulty = difficulty;
         m_moreDifficultiesOverride = moreDifficultiesOverride;
+        m_grandpaDemonOverride = 0;
+        m_demonsInBetweenOverride = 0;
         FakeRate::toggle(m_selected->getNormalImage(), false);
         FakeRate::toggle(sender->getNormalImage(), true);
         m_selected = sender;
