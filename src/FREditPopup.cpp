@@ -217,7 +217,7 @@ void FREditPopup::updateLabels() {
                 fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", m_grandpaDemonOverride - 1).c_str()));
             m_grdSprite->setPosition(m_difficultySprite->getPosition());
             m_grdSprite->setVisible(true);
-            m_mdSprite->setVisible(false);
+            if (m_mdSprite) m_mdSprite->setVisible(false);
             m_grdInfinity->setPosition(m_difficultySprite->getPosition() + CCPoint { -0.4f, 14.0f });
             m_grdInfinity->setVisible(m_grandpaDemonOverride == 5);
             m_difficultySprite->setOpacity(0);
@@ -230,7 +230,7 @@ void FREditPopup::updateLabels() {
                 fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn2_001.png", m_demonsInBetweenOverride).c_str()));
             m_dibSprite->setPosition(m_difficultySprite->getPosition() + FakeRate::getDIBOffset(m_demonsInBetweenOverride, GJDifficultyName::Long));
             m_dibSprite->setVisible(true);
-            m_mdSprite->setVisible(false);
+            if (m_mdSprite) m_mdSprite->setVisible(false);
             m_difficultySprite->setOpacity(0);
         }
         else m_dibSprite->setVisible(false);

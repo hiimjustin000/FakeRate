@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.3.7 (2024-08-11)
+- Fixed a bug where the game would crash with More Difficulties disabled
+
 ## v1.3.6 (2024-08-10)
 - Fixed a bug where More Difficulties difficulties would not display ever
 
