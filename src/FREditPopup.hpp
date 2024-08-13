@@ -50,14 +50,16 @@ public:
     static FRSetDifficultyPopup* create(int, int, int, int, bool, SetDifficultyCallback);
 };
 
-class FRSetStarsPopup : public Popup<int, SetStarsCallback> {
+class FRSetStarsPopup : public Popup<int, bool, SetStarsCallback> {
 protected:
     int m_stars;
     TextInput* m_input;
+    CCLabelBMFont* m_label;
+    CCNode* m_starLayout;
 
-    bool setup(int, SetStarsCallback) override;
+    bool setup(int, bool, SetStarsCallback) override;
 public:
-    static FRSetStarsPopup* create(int, SetStarsCallback);
+    static FRSetStarsPopup* create(int, bool, SetStarsCallback);
 };
 
 class FRSetFeaturePopup : public Popup<int, int, int, int, int, bool, SetFeatureCallback> {

@@ -84,7 +84,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
     m_buttonMenu->addChild(difficultyButton);
 
     auto starsButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Stars", "goldFont.fnt", "GJ_button_02.png", 0.8f), [this, data](auto) {
-        FRSetStarsPopup::create(m_stars, [this](int stars) {
+        FRSetStarsPopup::create(m_stars, m_level->m_levelLength == 5, [this](int stars) {
             m_stars = stars;
             updateLabels();
         })->show();
@@ -354,9 +354,9 @@ void FRSetDifficultyPopup::createDifficultyToggle(CCMenu* menu, int difficulty, 
     menu->addChild(toggle);
 }
 
-FRSetStarsPopup* FRSetStarsPopup::create(int stars, SetStarsCallback callback) {
+FRSetStarsPopup* FRSetStarsPopup::create(int stars, bool platformer, SetStarsCallback callback) {
     auto ret = new FRSetStarsPopup();
-    if (ret->initAnchored(250.0f, 150.0f, stars, callback)) {
+    if (ret->initAnchored(250.0f, 150.0f, stars, platformer, callback)) {
         ret->autorelease();
         return ret;
     }
@@ -364,7 +364,7 @@ FRSetStarsPopup* FRSetStarsPopup::create(int stars, SetStarsCallback callback) {
     return nullptr;
 }
 
-bool FRSetStarsPopup::setup(int stars, SetStarsCallback callback) {
+bool FRSetStarsPopup::setup(int stars, bool platformer, SetStarsCallback callback) {
     setTitle("Set Stars");
     m_noElasticity = true;
     m_stars = stars;
@@ -374,26 +374,48 @@ bool FRSetStarsPopup::setup(int stars, SetStarsCallback callback) {
     m_input->setPosition(125.0f, 80.0f);
     m_input->getInputNode()->setLabelPlaceholderColor({ 120, 170, 240 });
     m_input->setString(std::to_string(m_stars));
+    m_input->setMaxCharCount(11);
     m_input->setCallback([this](std::string const& text) {
-        auto stars = (text.empty() || text == "-" || (text.find('-') != std::string::npos && !string::startsWith(text, "-"))) ? 0 : std::stoll(text);
+        auto stars = numFromString<int64_t>(text).unwrapOr(0);
         if (stars < INT_MIN) stars = INT_MIN;
         if (stars > INT_MAX) stars = INT_MAX;
         m_stars = stars;
-        auto starsStr = std::to_string(m_stars);
-        if (starsStr != text) m_input->setString(starsStr);
+        m_label->setString(std::to_string(m_stars).c_str());
+        m_starLayout->updateLayout();
     });
     m_mainLayer->addChild(m_input);
 
+    m_starLayout = CCNode::create();
+    m_starLayout->setPosition(125.0f, 52.5f);
+    m_starLayout->setContentSize({ 250.0f, 15.0f });
+    m_starLayout->setAnchorPoint({ 0.5f, 0.5f });
+    m_starLayout->setLayout(RowLayout::create()->setGap(1.75f)->setAutoScale(false));
+    m_mainLayer->addChild(m_starLayout);
+
+    m_label = CCLabelBMFont::create(std::to_string(m_stars).c_str(), "bigFont.fnt");
+    m_label->setScale(0.4f);
+    m_starLayout->addChild(m_label);
+
+    m_starLayout->addChild(CCSprite::createWithSpriteFrameName(platformer ? "moon_small01_001.png" : "star_small01_001.png"));
+
+    m_starLayout->updateLayout();
+
     auto leftButton = CCMenuItemExt::createSpriteExtraWithFrameName("edit_leftBtn_001.png", 1.1f, [this](auto) {
         if (m_stars != INT_MIN) m_stars -= 1;
-        m_input->setString(std::to_string(m_stars));
+        auto stars = std::to_string(m_stars);
+        m_input->setString(stars);
+        m_label->setString(stars.c_str());
+        m_starLayout->updateLayout();
     });
     leftButton->setPosition(30.0f, 80.0f);
     m_buttonMenu->addChild(leftButton);
 
     auto rightButton = CCMenuItemExt::createSpriteExtraWithFrameName("edit_rightBtn_001.png", 1.1f, [this](auto) {
         if (m_stars != INT_MAX) m_stars += 1;
-        m_input->setString(std::to_string(m_stars));
+        auto stars = std::to_string(m_stars);
+        m_input->setString(stars);
+        m_label->setString(stars.c_str());
+        m_starLayout->updateLayout();
     });
     rightButton->setPosition(220.0f, 80.0f);
     m_buttonMenu->addChild(rightButton);

@@ -1,4 +1,8 @@
 # Fake Rate Changelog
+## v1.3.9 (2024-08-13)
+- Added a star display to the set stars popup
+- Fixed bugs relating to star input in the set stars popup
+
 ## v1.3.8 (2024-08-11)
 - Fixed a bug where selecting a difficulty face in the fake rate popup would not work with an override set
 
