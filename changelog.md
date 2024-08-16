@@ -1,4 +1,10 @@
 # Fake Rate Changelog
+## v1.4.0 (2024-08-16)
+- Added GDDP Integration support
+- Added support for Grandpa Demon background effects and particles
+- Fixed a bug where the infinity symbol would remain in the fake rate popup after changing the difficulty
+- Fixed a bug where setting an override difficulty of the same type would make the difficulty faces stack
+
 ## v1.3.9 (2024-08-13)
 - Added a star display to the set stars popup
 - Fixed bugs relating to star input in the set stars popup
