@@ -68,7 +68,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             .difficulty = FakeRate::getDifficultyFromLevel(m_level),
             .moreDifficultiesOverride = Loader::get()->isModLoaded("uproxide.more_difficulties") ? stars == 4 || stars == 7 || stars == 9 ? stars :
                 stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9) ? starsRequested : 0 : 0,
-            .grandpaDemonOverride = grandpaDemon && !gddpOverride ? FakeRate::getGRDOverride(grandpaDemon) : 0,
+            .grandpaDemonOverride = grandpaDemon && (!gddpOverride || !gddpDifficulty) ? FakeRate::getGRDOverride(grandpaDemon) : 0,
             .demonsInBetweenOverride = demonInBetween ? FakeRate::getDIBOverride(demonInBetween) : 0,
             .gddpIntegrationOverride = gddpDifficulty && (!grandpaDemon || gddpOverride) ? FakeRate::getGDDPOverride(gddpDifficulty) : 0,
             .coins = m_level->m_coinsVerified > 0
@@ -132,7 +132,8 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
                 }
 
                 auto bgNum = 0;
-                if (isSpriteName(child, "itzkiba.grandpa_demon/GrD_demon4_bg.png")) {
+                if (isSpriteName(child, "itzkiba.grandpa_demon/GrD_demon4_bg.png") &&
+                    child->getID().find("hiimjustin000.fake_rate/grandpa_background") != std::string::npos) {
                     if (child->getID() == "") child->setID(fmt::format("grd-bg-{}", ++bgNum));
                     if (child->getID() == "grd-bg-1") child->setVisible(remove);
                     else if (child->getID() == "grd-bg-2") child->setVisible(remove);
@@ -141,7 +142,8 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
                 }
 
                 auto particleNum = 0;
-                if (typeinfo_cast<CCParticleSystemQuad*>(child) && child->getPositionY() == winSize.height / 2 + 76.0f) {
+                if (typeinfo_cast<CCParticleSystemQuad*>(child) && child->getPositionY() == winSize.height / 2 + 76.0f &&
+                    child->getID().find("hiimjustin000.fake_rate/grandpa_particles") != std::string::npos) {
                     if (child->getID() == "") child->setID(fmt::format("grd-particles-{}", ++particleNum));
                     if (child->getID() == "grd-particles-1") child->setVisible(remove);
                     else if (child->getID() == "grd-particles-2") child->setVisible(remove);

@@ -1,4 +1,8 @@
 # Fake Rate Changelog
+## v1.4.1 (2024-08-16)
+- Fixed a bug where the game would crash if a grandpa demon rate was removed
+- Fixed a bug where the fake rate popup would sometimes not identify grandpa demons correctly
+
 ## v1.4.0 (2024-08-16)
 - Added GDDP Integration support
 - Added support for Grandpa Demon background effects and particles
