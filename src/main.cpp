@@ -133,7 +133,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
 
                 auto bgNum = 0;
                 if (isSpriteName(child, "itzkiba.grandpa_demon/GrD_demon4_bg.png") &&
-                    child->getID().find("hiimjustin000.fake_rate/grandpa-background") == std::string::npos) {
+                    child->getID().find("grandpa-background"_spr) == std::string::npos) {
                     if (child->getID() == "") child->setID(fmt::format("grd-bg-{}", ++bgNum));
                     if (child->getID() == "grd-bg-1") child->setVisible(remove);
                     else if (child->getID() == "grd-bg-2") child->setVisible(remove);
@@ -143,7 +143,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
 
                 auto particleNum = 0;
                 if (typeinfo_cast<CCParticleSystemQuad*>(child) && child->getPositionY() == winSize.height / 2 + 76.0f &&
-                    child->getID().find("hiimjustin000.fake_rate/grandpa-particles") == std::string::npos) {
+                    child->getID().find("grandpa-particles"_spr) == std::string::npos) {
                     if (child->getID() == "") child->setID(fmt::format("grd-particles-{}", ++particleNum));
                     if (child->getID() == "grd-particles-1") child->setVisible(remove);
                     else if (child->getID() == "grd-particles-2") child->setVisible(remove);
