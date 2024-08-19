@@ -44,7 +44,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
         m_grdInfinity = FREffects::grdInfinity();
         m_grdInfinity->setPosition({ 59.6f, 119.0f });
         m_grdInfinity->setVisible(false);
-        m_mainLayer->addChild(m_grdInfinity, 30);
+        m_mainLayer->addChild(m_grdInfinity);
     }
     if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between")) {
         m_dibSprite = CCSprite::createWithSpriteFrameName("hiimjustin000.demons_in_between/DIB_01_btn2_001.png");
@@ -138,7 +138,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
 
     auto addButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
         auto vec = Mod::get()->getSavedValue<std::vector<FakeRateSaveData>>("fake-rate", {});
-        auto it = std::find_if(vec.begin(), vec.end(), [this](FakeRateSaveData const& item) {
+        std::vector<FakeRateSaveData>::iterator it = std::find_if(vec.begin(), vec.end(), [this](FakeRateSaveData const& item) {
             return item.id == m_level->m_levelID;
         });
         if (it != vec.end()) {
@@ -148,6 +148,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
             it->moreDifficultiesOverride = m_moreDifficultiesOverride;
             it->grandpaDemonOverride = m_grandpaDemonOverride;
             it->demonsInBetweenOverride = m_demonsInBetweenOverride;
+            it->gddpIntegrationOverride = m_gddpIntegrationOverride;
             it->coins = m_coins;
         }
         else {

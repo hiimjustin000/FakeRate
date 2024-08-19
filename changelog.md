@@ -1,4 +1,9 @@
 # Fake Rate Changelog
+## v1.4.3 (2024-08-18)
+- Added GDDP Integration background colors
+- Fixed a bug where editing a fake rate would not save the GDDP difficulty
+- Added additional links to the mod info page
+
 ## v1.4.2 (2024-08-16)
 - Changed the logo to reflect the new supercharged updates
 

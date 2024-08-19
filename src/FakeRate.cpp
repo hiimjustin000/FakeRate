@@ -152,7 +152,7 @@ int FakeRate::getGDDPOverride(CCSprite* sprite) {
 }
 
 std::string FakeRate::getGDDPFrame(int difficulty, GJDifficultyName name) {
-    auto diff = std::string();
+    auto diff = "";
     switch (difficulty) {
         case 1: diff = "Beginner"; break;
         case 2: diff = "Bronze"; break;

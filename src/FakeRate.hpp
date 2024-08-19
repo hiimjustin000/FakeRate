@@ -30,7 +30,7 @@ public:
 template<>
 struct matjson::Serialize<std::vector<FakeRateSaveData>> {
     static std::vector<FakeRateSaveData> from_json(matjson::Value const& value) {
-        auto vec = std::vector<FakeRateSaveData> {};
+        std::vector<FakeRateSaveData> vec;
         for (auto const& item : value.as_array()) {
             vec.push_back({
                 .id = item["id"].as_int(),
@@ -48,7 +48,7 @@ struct matjson::Serialize<std::vector<FakeRateSaveData>> {
     }
 
     static matjson::Value to_json(std::vector<FakeRateSaveData> const& vec) {
-        auto arr = matjson::Array {};
+        matjson::Array arr;
         for (auto const& item : vec) {
             arr.push_back(matjson::Object {
                 { "id", item.id },

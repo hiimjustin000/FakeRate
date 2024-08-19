@@ -5,7 +5,7 @@
         "win": "2.206",
         "mac": "2.206"
     },
-    "version": "v1.4.2",
+    "version": "v1.4.3",
     "id": "hiimjustin000.fake_rate",
     "name": "Fake Rate",
     "developer": "hiimjustin000",
@@ -18,17 +18,18 @@
             "importance": "required"
         }
     ],
-    "incompatibilities": [
-        {
-            "id": "uproxide.more_difficulties",
-            "importance": "breaking",
-            "version": "<=v1.2.0"
-        }
-    ],
     "resources": {
         "sprites": [
             "resources/*.png"
+        ],
+        "files": [
+            "resources/*.plist"
         ]
+    },
+    "links": {
+        "community": "https://discord.gg/QVKmbvBXA7",
+        "source": "https://github.com/hiimjustin000/FakeRate",
+        "homepage": "https://www.hiimjustin000.com"
     },
     "tags": [
         "customization",

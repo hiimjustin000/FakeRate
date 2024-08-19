@@ -8,6 +8,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         CCSprite* m_grandpaBackground2;
         CCParticleSystemQuad* m_grandpaParticles1;
         CCParticleSystemQuad* m_grandpaParticles2;
+        ccColor3B m_backgroundColor;
     };
 
     static void onModify(auto& self) {
@@ -19,6 +20,8 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
 
     bool init(GJGameLevel* level, bool challenge) {
         if (!LevelInfoLayer::init(level, challenge)) return false;
+
+        m_fields->m_backgroundColor = static_cast<CCSprite*>(getChildByID("background"))->getColor();
 
         auto buttonSprite = CircleButtonSprite::createWithSprite("FR_fakeRateBtn_001.png"_spr, 1.0f, CircleBaseColor::Green, CircleBaseSize::Medium);
         buttonSprite->getTopNode()->setScale(1.0f);
@@ -84,7 +87,8 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         auto dbo = data.demonsInBetweenOverride;
         auto gio = data.gddpIntegrationOverride;
         auto coins = data.coins;
-        m_fields->m_fakeRateData = {
+        auto& fields = m_fields;
+        fields->m_fakeRateData = {
             .id = m_level->m_levelID,
             .stars = stars,
             .feature = feature,
@@ -96,21 +100,22 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             .coins = coins
         };
 
-        m_fields->m_grandpaBackground1 = static_cast<CCSprite*>(getChildByID("grandpa-background-1"_spr));
-        m_fields->m_grandpaBackground2 = static_cast<CCSprite*>(getChildByID("grandpa-background-2"_spr));
-        m_fields->m_grandpaParticles1 = static_cast<CCParticleSystemQuad*>(getChildByID("grandpa-particles-1"_spr));
-        m_fields->m_grandpaParticles2 = static_cast<CCParticleSystemQuad*>(getChildByID("grandpa-particles-2"_spr));
+        fields->m_grandpaBackground1 = static_cast<CCSprite*>(getChildByID("grandpa-background-1"_spr));
+        fields->m_grandpaBackground2 = static_cast<CCSprite*>(getChildByID("grandpa-background-2"_spr));
+        fields->m_grandpaParticles1 = static_cast<CCParticleSystemQuad*>(getChildByID("grandpa-particles-1"_spr));
+        fields->m_grandpaParticles2 = static_cast<CCParticleSystemQuad*>(getChildByID("grandpa-particles-2"_spr));
 
         auto hide = false;
         if (auto betweenDifficultySprite = static_cast<CCSprite*>(getChildByID("hiimjustin000.demons_in_between/between-difficulty-sprite"))) {
             betweenDifficultySprite->setVisible(remove);
             m_difficultySprite->setOpacity(remove ? 0 : 255);
             hide = remove || hide;
-            m_fields->m_fakeRateData.demonsInBetweenOverride = remove ? FakeRate::getDIBOverride(betweenDifficultySprite) : dbo;
+            fields->m_fakeRateData.demonsInBetweenOverride = remove ? FakeRate::getDIBOverride(betweenDifficultySprite) : dbo;
         }
         auto gddpOverride = false;
+        auto gddpIntegration = Loader::get()->getLoadedMod("minemaker0430.gddp_integration");
         if (auto gddpDifficultySprite = static_cast<CCSprite*>(getChildByID("gddp-difficulty"))) {
-            gddpOverride = gddpDifficultySprite->isVisible();
+            gddpOverride = gddpIntegration ? gddpIntegration->getSettingValue<bool>("override-grandpa-demon") : false;
             gddpDifficultySprite->setVisible(remove);
             m_difficultySprite->setOpacity(remove ? 0 : 255);
             if (FakeRate::getSpriteName(gddpDifficultySprite).find("Plus") != std::string::npos) {
@@ -118,7 +123,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
                     epicSprite->setVisible(!Loader::get()->isModLoaded("uproxide.animated_fire") && !remove);
             }
             hide = remove || hide;
-            m_fields->m_fakeRateData.gddpIntegrationOverride = remove ? FakeRate::getGDDPOverride(gddpDifficultySprite) : gio;
+            fields->m_fakeRateData.gddpIntegrationOverride = remove ? FakeRate::getGDDPOverride(gddpDifficultySprite) : gio;
         }
         auto hasEffects = false;
         auto winSize = CCDirector::sharedDirector()->getWinSize();
@@ -133,7 +138,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
 
                 auto bgNum = 0;
                 if (isSpriteName(child, "itzkiba.grandpa_demon/GrD_demon4_bg.png") &&
-                    child->getID().find("grandpa-background"_spr) == std::string::npos) {
+                    child != fields->m_grandpaBackground1 && child != fields->m_grandpaBackground2) {
                     if (child->getID() == "") child->setID(fmt::format("grd-bg-{}", ++bgNum));
                     if (child->getID() == "grd-bg-1") child->setVisible(remove);
                     else if (child->getID() == "grd-bg-2") child->setVisible(remove);
@@ -143,7 +148,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
 
                 auto particleNum = 0;
                 if (typeinfo_cast<CCParticleSystemQuad*>(child) && child->getPositionY() == winSize.height / 2 + 76.0f &&
-                    child->getID().find("grandpa-particles"_spr) == std::string::npos) {
+                    child != fields->m_grandpaParticles1 && child != fields->m_grandpaParticles2) {
                     if (child->getID() == "") child->setID(fmt::format("grd-particles-{}", ++particleNum));
                     if (child->getID() == "grd-particles-1") child->setVisible(remove);
                     else if (child->getID() == "grd-particles-2") child->setVisible(remove);
@@ -157,7 +162,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             hide = (hasDemon && remove) || hide;
             if (auto featureGlow = m_difficultySprite->getChildByTag(69420))
                 featureGlow->setPosition(m_difficultySprite->getContentSize() / 2);
-            m_fields->m_fakeRateData.grandpaDemonOverride = hasDemon && remove ? FakeRate::getGRDOverride(static_cast<CCSprite*>(getChildByID("grd-difficulty"))) : gdo;
+            fields->m_fakeRateData.grandpaDemonOverride = hasDemon && remove ? FakeRate::getGRDOverride(static_cast<CCSprite*>(getChildByID("grd-difficulty"))) : gdo;
         }
         auto gsm = GameStatsManager::sharedState();
         auto showStars = stars != 0 || m_level->m_dailyID > 0 || m_level->m_gauntletLevel;
@@ -189,7 +194,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             auto diamonds = stars > 1 ? stars + 2 : 0;
             diamondLabel->setString(fmt::format("{}/{}", (int)floorf(diamonds * m_level->m_normalPercent / 100.0f), diamonds).c_str());
             diamondIcon->setPosition({
-                position.x + diamondLabel->getScaledContentSize().width * 0.5f + 2.0f,
+                position.x + diamondLabel->getScaledContentWidth() * 0.5f + 2.0f,
                 position.y - (isDemon ? 9.0f : 0.0f) - 44.5f
             });
             diamondLabel->setPosition({ diamondIcon->getPositionX() - 8.0f, diamondIcon->getPositionY() });
@@ -210,7 +215,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             m_orbsIcon->setPositionY(yPos - yOffset * 2.0f);
             m_orbsLabel->setPositionY(m_orbsIcon->getPositionY());
             auto orbs = FakeRate::getBaseCurrency(stars);
-            auto totalOrbs = (int)floorf(orbs * 1.25f);
+            int totalOrbs = floorf(orbs * 1.25f);
             m_orbsLabel->setString(fmt::format("{}/{}",
                 (int)floorf(m_level->m_normalPercent != 100 ? orbs * m_level->m_normalPercent / 100.0f : totalOrbs), totalOrbs).c_str());
             m_orbsLabel->limitLabelWidth(60.0f, 0.5f, 0.0f);
@@ -221,12 +226,17 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
 
         if (Loader::get()->isModLoaded("uproxide.more_difficulties")) fixMoreDifficultiesIncompatibility(mdo, remove, hide, gdo, dbo, gio);
 
-        static_cast<CCSprite*>(getChildByID("background"))->setOpacity(hasEffects && remove ? 50 : 255);
-        static_cast<CCSprite*>(getChildByID("bottom-left-art"))->setOpacity(hasEffects && remove ? 50 : 255);
-        static_cast<CCSprite*>(getChildByID("bottom-right-art"))->setOpacity(hasEffects && remove ? 50 : 255);
+        auto grandpaDemon = Loader::get()->getLoadedMod("itzkiba.grandpa_demon");
+        auto showBackground = (hasEffects && remove) || (gdo > 2 && (grandpaDemon ? !grandpaDemon->getSettingValue<bool>("infinite-demon-disable") : false));
+        auto background = static_cast<CCSprite*>(getChildByID("background"));
+        background->setZOrder(showBackground ? -10 : -2);
+        background->setOpacity(showBackground ? 50 : 255);
+        background->setColor((gddpOverride && remove) || (gio > 0 && (gddpIntegration ? !gddpIntegration->getSettingValue<bool>("restore-bg-color") : false)) ?
+            ccColor3B { 18, 18, 86 } : fields->m_backgroundColor);
+        static_cast<CCSprite*>(getChildByID("bottom-left-art"))->setOpacity(showBackground ? 50 : 255);
+        static_cast<CCSprite*>(getChildByID("bottom-right-art"))->setOpacity(showBackground ? 50 : 255);
 
         if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && gdo > 0 && gdo < 7) {
-            auto grandpaDemon = Loader::get()->getLoadedMod("itzkiba.grandpa_demon");
             if (auto fakeGrandpaDemon = static_cast<CCSprite*>(getChildByID("grandpa-demon-sprite"_spr))) {
                 fakeGrandpaDemon->removeFromParent();
                 if (auto fakeGrandpaInfinity = static_cast<CCSprite*>(getChildByID("grandpa-demon-infinity"_spr))) fakeGrandpaInfinity->removeFromParent();
@@ -240,57 +250,65 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
                 auto grdInfinity = FREffects::grdInfinity();
                 grdInfinity->setID("grandpa-demon-infinity"_spr);
                 grdInfinity->setPosition(position + CCPoint { -0.4f, 14.0f });
-                addChild(grdInfinity, 30);
+                addChild(grdInfinity);
             } else if (auto grdInfinity = getChildByID("grandpa-demon-infinity"_spr)) grdInfinity->removeFromParent();
 
-            if (m_fields->m_grandpaBackground1) m_fields->m_grandpaBackground1->removeFromParent();
-            if (m_fields->m_grandpaBackground2) m_fields->m_grandpaBackground2->removeFromParent();
-            if (m_fields->m_grandpaParticles1) m_fields->m_grandpaParticles1->removeFromParent();
-            if (m_fields->m_grandpaParticles2) m_fields->m_grandpaParticles2->removeFromParent();
+            if (fields->m_grandpaBackground1) fields->m_grandpaBackground1->removeFromParent();
+            if (fields->m_grandpaBackground2) fields->m_grandpaBackground2->removeFromParent();
+            if (fields->m_grandpaParticles1) fields->m_grandpaParticles1->removeFromParent();
+            if (fields->m_grandpaParticles2) fields->m_grandpaParticles2->removeFromParent();
 
-            if (!grandpaDemon->getSettingValue<bool>("infinite-demon-disable")) {
+            if (showBackground) {
                 switch (gdo) {
                     case 3: {
-                        m_fields->m_grandpaBackground1 = FREffects::legendaryBackground(this);
+                        fields->m_grandpaBackground1 = FREffects::legendaryBackground();
+                        fields->m_grandpaBackground1->setID("grandpa-background-1"_spr);
+                        addChild(fields->m_grandpaBackground1);
                         break;
                     }
                     case 4: {
-                        m_fields->m_grandpaBackground1 = FREffects::mythicalBackground(this);
+                        fields->m_grandpaBackground1 = FREffects::mythicalBackground();
+                        fields->m_grandpaBackground1->setID("grandpa-background-1"_spr);
+                        addChild(fields->m_grandpaBackground1);
                         break;
                     }
                     case 5: case 6: {
-                        auto backgrounds = FREffects::infinityBackgrounds(this, gdo == 6);
-                        m_fields->m_grandpaBackground1 = backgrounds.first;
-                        m_fields->m_grandpaBackground2 = backgrounds.second;
+                        auto backgrounds = FREffects::infinityBackgrounds(gdo == 6);
+                        fields->m_grandpaBackground1 = backgrounds.first;
+                        fields->m_grandpaBackground1->setID("grandpa-background-1"_spr);
+                        addChild(fields->m_grandpaBackground1);
+                        fields->m_grandpaBackground2 = backgrounds.second;
+                        fields->m_grandpaBackground2->setID("grandpa-background-2"_spr);
+                        addChild(fields->m_grandpaBackground2);
                         break;
                     }
                 }
             }
 
-            if (!grandpaDemon->getSettingValue<bool>("particles-disable")) {
-                auto particlePos = position + CCPoint { 0.0f, 5.0f };
+            if (!grandpaDemon->getSettingValue<bool>("particles-disable") && gdo > 2) {
+                auto particles1 = "";
+                auto particles2 = "";
                 switch (gdo) {
-                    case 3: {
-                        m_fields->m_grandpaParticles1 = FREffects::legendaryParticles();
-                        m_fields->m_grandpaParticles1->setPosition(particlePos);
-                        addChild(m_fields->m_grandpaParticles1);
-                        break;
-                    }
-                    case 4: {
-                        m_fields->m_grandpaParticles1 = FREffects::mythicalParticles();
-                        m_fields->m_grandpaParticles1->setPosition(particlePos);
-                        addChild(m_fields->m_grandpaParticles1);
-                        break;
-                    }
-                    case 5: case 6: {
-                        m_fields->m_grandpaParticles1 = FREffects::infiniteParticles1(gdo == 6);
-                        m_fields->m_grandpaParticles1->setPosition(particlePos);
-                        addChild(m_fields->m_grandpaParticles1);
-                        m_fields->m_grandpaParticles2 = FREffects::infiniteParticles2();
-                        m_fields->m_grandpaParticles2->setPosition(particlePos);
-                        addChild(m_fields->m_grandpaParticles2);
-                        break;
-                    }
+                    case 3: particles1 = "legendaryEffect.plist"_spr; break;
+                    case 4: particles1 = "mythicalEffect.plist"_spr; break;
+                    case 5: particles1 = "infiniteEffect.plist"_spr; particles2 = "infiniteSunEffect.plist"_spr; break;
+                    case 6: particles1 = "grandpaEffect.plist"_spr; particles2 = "infiniteSunEffect.plist"_spr; break;
+                }
+
+                auto particlePos = position + CCPoint { 0.0f, 5.0f };
+                if (strlen(particles1) > 0) {
+                    fields->m_grandpaParticles1 = CCParticleSystemQuad::create();
+                    fields->m_grandpaParticles1->initWithDictionary(CCDictionary::createWithContentsOfFileThreadSafe(particles1), false);
+                    fields->m_grandpaParticles1->setPosition(particlePos);
+                    fields->m_grandpaParticles1->setID("grandpa-particles-1"_spr);
+                    addChild(fields->m_grandpaParticles1);
+                }
+                if (strlen(particles2) > 0) {
+                    fields->m_grandpaParticles2 = CCParticleSystemQuad::create();
+                    fields->m_grandpaParticles2->initWithDictionary(CCDictionary::createWithContentsOfFileThreadSafe(particles2), false);
+                    fields->m_grandpaParticles2->setPosition(particlePos);
+                    fields->m_grandpaParticles2->setID("grandpa-particles-2"_spr);
+                    addChild(fields->m_grandpaParticles2);
                 }
             }
 
@@ -299,10 +317,10 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         else if (auto grdSprite = getChildByID("grandpa-demon-sprite"_spr)) {
             grdSprite->removeFromParent();
             if (auto grdInfinity = getChildByID("grandpa-demon-infinity"_spr)) grdInfinity->removeFromParent();
-            if (m_fields->m_grandpaBackground1) m_fields->m_grandpaBackground1->removeFromParent();
-            if (m_fields->m_grandpaBackground2) m_fields->m_grandpaBackground2->removeFromParent();
-            if (m_fields->m_grandpaParticles1) m_fields->m_grandpaParticles1->removeFromParent();
-            if (m_fields->m_grandpaParticles2) m_fields->m_grandpaParticles2->removeFromParent();
+            if (fields->m_grandpaBackground1) fields->m_grandpaBackground1->removeFromParent();
+            if (fields->m_grandpaBackground2) fields->m_grandpaBackground2->removeFromParent();
+            if (fields->m_grandpaParticles1) fields->m_grandpaParticles1->removeFromParent();
+            if (fields->m_grandpaParticles2) fields->m_grandpaParticles2->removeFromParent();
         }
 
         if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && dbo > 0 && dbo < 21) {
@@ -453,7 +471,7 @@ class $modify(FRLevelCell, LevelCell) {
                     auto diamondIcon = static_cast<CCSprite*>(difficultyContainer->getChildByID("diamond-icon"));
                     auto diamonds = fakeRateData.stars > 1 ? fakeRateData.stars + 2 : 0;
                     diamondLabel->setString(fmt::format("{}/{}", (int)floorf(diamonds * level->m_normalPercent / 100.0f), diamonds).c_str());
-                    diamondIcon->setPositionX(difficultySprite->getPositionX() + diamondLabel->getScaledContentSize().width * 0.5f + 2.0f);
+                    diamondIcon->setPositionX(difficultySprite->getPositionX() + diamondLabel->getScaledContentWidth() * 0.5f + 2.0f);
                     diamondLabel->setPositionX(diamondIcon->getPositionX() - 8.0f);
                 }
 
@@ -461,18 +479,18 @@ class $modify(FRLevelCell, LevelCell) {
                 auto lengthLabel = static_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("length-label"));
                 auto downloadsIcon = static_cast<CCSprite*>(m_mainLayer->getChildByID("downloads-icon"));
                 auto downloadsLabel = static_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("downloads-label"));
-                downloadsIcon->setPositionX(lengthLabel->getPositionX() + lengthLabel->getScaledContentSize().width + padding);
+                downloadsIcon->setPositionX(lengthLabel->getPositionX() + lengthLabel->getScaledContentWidth() + padding);
                 downloadsLabel->setPositionX(downloadsIcon->getPositionX() + 9.0f);
                 auto likesLabel = static_cast<CCLabelBMFont*>(m_mainLayer->getChildByID("likes-label"));
                 auto likesIcon = static_cast<CCSprite*>(m_mainLayer->getChildByID("likes-icon"));
-                likesIcon->setPositionX(downloadsLabel->getPositionX() + downloadsLabel->getScaledContentSize().width + padding);
+                likesIcon->setPositionX(downloadsLabel->getPositionX() + downloadsLabel->getScaledContentWidth() + padding);
                 likesLabel->setPositionX(likesIcon->getPositionX() + 10.0f);
                 if (showStars) {
                     auto orbsIcon = static_cast<CCSprite*>(m_mainLayer->getChildByID("orbs-icon"));
                     if (!orbsIcon) {
                         orbsIcon = CCSprite::createWithSpriteFrameName("currencyOrbIcon_001.png");
                         orbsIcon->setScale(m_compactView ? 0.4f : 0.6f);
-                        orbsIcon->setPosition({ likesLabel->getPositionX() + likesLabel->getScaledContentSize().width + padding, likesLabel->getPositionY() });
+                        orbsIcon->setPosition({ likesLabel->getPositionX() + likesLabel->getScaledContentWidth() + padding, likesLabel->getPositionY() });
                         orbsIcon->setID("orbs-icon");
                         m_mainLayer->addChild(orbsIcon);
                     }
@@ -486,7 +504,7 @@ class $modify(FRLevelCell, LevelCell) {
                         m_mainLayer->addChild(orbsLabel);
                     }
                     auto orbs = FakeRate::getBaseCurrency(fakeRateData.stars);
-                    auto totalOrbs = (int)floorf(orbs * 1.25f);
+                    int totalOrbs = floorf(orbs * 1.25f);
                     auto percent = level->m_normalPercent.value();
                     auto savedLevel = GameLevelManager::sharedState()->getSavedLevel(level->m_levelID);
                     if (savedLevel) percent = savedLevel->m_normalPercent.value();
@@ -515,7 +533,7 @@ class $modify(FRLevelCell, LevelCell) {
                         auto grdInfinity = FREffects::grdInfinity();
                         grdInfinity->setID("grandpa-demon-infinity"_spr);
                         grdInfinity->setPosition(position + CCPoint { -0.4f, 14.0f });
-                        difficultyContainer->addChild(grdInfinity, 30);
+                        difficultyContainer->addChild(grdInfinity);
                     }
                     difficultySprite->setOpacity(0);
                 }
