@@ -1,4 +1,4 @@
-#include "FakeRate.hpp"
+#include "TableNode.hpp"
 
 class FREffects {
 public:

@@ -1,4 +1,9 @@
 # Fake Rate Changelog
+## v1.4.4 (2024-08-19)
+- Fixed the weird positioning of difficulty faces in the difficulty selection popup if More Difficulties is disabled
+- Changed references of stars to moons in the set stars popup if the level is in platformer mode
+- Aligned the images' widths in the about page gallery
+
 ## v1.4.3 (2024-08-18)
 - Added GDDP Integration background colors
 - Fixed a bug where editing a fake rate would not save the GDDP difficulty

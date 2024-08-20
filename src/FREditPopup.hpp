@@ -36,6 +36,11 @@ public:
 
 class FRSetDifficultyPopup : public Popup<FakeRateSaveData, bool, SetDifficultyCallback> {
 protected:
+    inline static std::vector<std::pair<int, int>> DIFFICULTIES = {
+        { 0, 0 }, { -1, 0 }, { 1, 0 }, { 2, 0 }, { 3, 4 }, { 3, 0 }, { 4, 0 }, { 4, 7 },
+        { 5, 0 }, { 5, 9 }, { 6, 0 }, { 7, 0 }, { 8, 0 }, { 9, 0 }, { 10, 0 }
+    };
+
     int m_difficulty;
     int m_moreDifficultiesOverride;
     int m_grandpaDemonOverride;
@@ -45,7 +50,6 @@ protected:
     CCMenuItemSpriteExtra* m_selected;
 
     bool setup(FakeRateSaveData, bool, SetDifficultyCallback) override;
-    void createDifficultyToggle(CCMenu*, int, int);
 public:
     static FRSetDifficultyPopup* create(FakeRateSaveData, bool, SetDifficultyCallback);
 };
@@ -74,7 +78,6 @@ protected:
     CCMenuItemSpriteExtra* m_selected;
 
     bool setup(FakeRateSaveData, bool, SetIntCallback) override;
-    void createFeatureToggle(CCMenu*, GJFeatureState);
 public:
     static FRSetFeaturePopup* create(FakeRateSaveData, bool, SetIntCallback);
 };
@@ -85,7 +88,6 @@ protected:
     CCMenuItemSpriteExtra* m_selected;
 
     bool setup(int, SetIntCallback) override;
-    void createGRDToggle(CCMenu*, int);
 public:
     static FRGRDPopup* create(int, SetIntCallback);
 };
@@ -96,7 +98,6 @@ protected:
     CCMenuItemSpriteExtra* m_selected;
 
     bool setup(int, SetIntCallback) override;
-    void createDIBToggle(CCMenu*, int);
 public:
     static FRDIBPopup* create(int, SetIntCallback);
 };
@@ -107,7 +108,6 @@ protected:
     CCMenuItemSpriteExtra* m_selected;
 
     bool setup(int, SetIntCallback) override;
-    void createGDDPToggle(CCMenu*, int);
 public:
     static FRGDDPPopup* create(int, SetIntCallback);
 };

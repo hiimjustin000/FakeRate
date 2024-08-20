@@ -98,7 +98,8 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
     difficultyButton->setPosition(200.0f, 150.0f);
     m_buttonMenu->addChild(difficultyButton);
 
-    auto starsButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Stars", "goldFont.fnt", "GJ_button_02.png", 0.8f), [this, data](auto) {
+    auto starsButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create(m_level->m_levelLength < 5 ? "Stars" : "Moons",
+        "goldFont.fnt", "GJ_button_02.png", 0.8f), [this](auto) {
         FRSetStarsPopup::create(m_stars, m_level->m_levelLength == 5, [this](int stars) {
             m_stars = stars;
             updateLabels();
@@ -297,44 +298,39 @@ bool FRSetDifficultyPopup::setup(FakeRateSaveData data, bool legacy, SetDifficul
     m_gddpIntegrationOverride = data.gddpIntegrationOverride;
     m_legacy = legacy;
 
-    auto menuRow1 = CCMenu::create();
-    menuRow1->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow1->setPosition(150.0f, 185.0f);
-    menuRow1->setContentSize({ 300.0f, 45.0f });
-    m_mainLayer->addChild(menuRow1);
+    auto table = TableNode::create(Loader::get()->isModLoaded("uproxide.more_difficulties") ? 5 : 4, 3);
+    table->setAnchorPoint({ 0.5f, 0.5f });
+    table->setColumnLayout(ColumnLayout::create()->setAxisReverse(true));
+    table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
+    table->setRowHeight(63.0f);
+    table->setContentSize({ 300.0f, 170.0f });
+    table->setPosition(150.0f, 130.0f);
+    m_mainLayer->addChild(table);
 
-    auto menuRow2 = CCMenu::create();
-    menuRow2->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow2->setPosition(150.0f, 135.0f);
-    menuRow2->setContentSize({ 300.0f, 45.0f });
-    m_mainLayer->addChild(menuRow2);
+    for (auto [d, mdo] : DIFFICULTIES) {
+        auto num = d == -1 ? "auto" : fmt::format("{:02d}", d);
+        auto frameName = d > 5 ? fmt::format("difficulty_{}_btn2_001.png", num) : fmt::format("difficulty_{}_btn_001.png", num);
+        if (Loader::get()->isModLoaded("uproxide.more_difficulties") && mdo > 0)
+            frameName = fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}{}.png", mdo, m_legacy ? "_Legacy" : "");
+        else if (mdo > 0) continue;
+        auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(frameName.c_str(), 1.0f, [this, d, mdo](CCMenuItemSpriteExtra* sender) {
+            if (sender == m_selected) return;
+            m_difficulty = d;
+            m_moreDifficultiesOverride = mdo;
+            m_grandpaDemonOverride = 0;
+            m_demonsInBetweenOverride = 0;
+            m_gddpIntegrationOverride = 0;
+            FakeRate::toggle(m_selected->getNormalImage(), false);
+            FakeRate::toggle(sender->getNormalImage(), true);
+            m_selected = sender;
+        });
+        auto isToggled = mdo == m_moreDifficultiesOverride && (m_moreDifficultiesOverride <= 0 ? d == m_difficulty : true);
+        FakeRate::toggle(toggle->getNormalImage(), isToggled);
+        m_selected = isToggled ? toggle : m_selected;
+        table->addButton(toggle);
+    }
 
-    auto menuRow3 = CCMenu::create();
-    menuRow3->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow3->setPosition(150.0f, 80.0f);
-    menuRow3->setContentSize({ 300.0f, 65.0f });
-    m_mainLayer->addChild(menuRow3);
-
-    createDifficultyToggle(menuRow1, 0, 0);
-    createDifficultyToggle(menuRow1, -1, 0);
-    createDifficultyToggle(menuRow1, 1, 0);
-    createDifficultyToggle(menuRow1, 2, 0);
-    createDifficultyToggle(menuRow1, 3, 4);
-    menuRow1->updateLayout();
-
-    createDifficultyToggle(menuRow2, 3, 0);
-    createDifficultyToggle(menuRow2, 4, 0);
-    createDifficultyToggle(menuRow2, 4, 7);
-    createDifficultyToggle(menuRow2, 5, 0);
-    createDifficultyToggle(menuRow2, 5, 9);
-    menuRow2->updateLayout();
-
-    createDifficultyToggle(menuRow3, 7, 0);
-    createDifficultyToggle(menuRow3, 8, 0);
-    createDifficultyToggle(menuRow3, 6, 0);
-    createDifficultyToggle(menuRow3, 9, 0);
-    createDifficultyToggle(menuRow3, 10, 0);
-    menuRow3->updateLayout();
+    table->updateAllLayouts();
 
     auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
         callback(m_difficulty, m_moreDifficultiesOverride, m_grandpaDemonOverride, m_demonsInBetweenOverride, m_gddpIntegrationOverride);
@@ -381,30 +377,6 @@ bool FRSetDifficultyPopup::setup(FakeRateSaveData data, bool legacy, SetDifficul
     return true;
 }
 
-void FRSetDifficultyPopup::createDifficultyToggle(CCMenu* menu, int difficulty, int moreDifficultiesOverride) {
-    auto num = difficulty == -1 ? "auto" : fmt::format("{:02d}", difficulty);
-    auto frameName = difficulty > 5 ? fmt::format("difficulty_{}_btn2_001.png", num) : fmt::format("difficulty_{}_btn_001.png", num);
-    if (Loader::get()->isModLoaded("uproxide.more_difficulties") && moreDifficultiesOverride > 0)
-        frameName = m_legacy ? fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}_Legacy.png", moreDifficultiesOverride)
-            : fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}.png", moreDifficultiesOverride);
-    else if (moreDifficultiesOverride > 0) return;
-    auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(frameName.c_str(), 1.0f, [this, difficulty, moreDifficultiesOverride](CCMenuItemSpriteExtra* sender) {
-        if (sender == m_selected) return;
-        m_difficulty = difficulty;
-        m_moreDifficultiesOverride = moreDifficultiesOverride;
-        m_grandpaDemonOverride = 0;
-        m_demonsInBetweenOverride = 0;
-        m_gddpIntegrationOverride = 0;
-        FakeRate::toggle(m_selected->getNormalImage(), false);
-        FakeRate::toggle(sender->getNormalImage(), true);
-        m_selected = sender;
-    });
-    auto isToggled = moreDifficultiesOverride == m_moreDifficultiesOverride && (m_moreDifficultiesOverride <= 0 ? difficulty == m_difficulty : true);
-    FakeRate::toggle(toggle->getNormalImage(), isToggled);
-    m_selected = isToggled ? toggle : m_selected;
-    menu->addChild(toggle);
-}
-
 FRSetStarsPopup* FRSetStarsPopup::create(int stars, bool platformer, SetIntCallback callback) {
     auto ret = new FRSetStarsPopup();
     if (ret->initAnchored(250.0f, 150.0f, stars, platformer, callback)) {
@@ -416,11 +388,11 @@ FRSetStarsPopup* FRSetStarsPopup::create(int stars, bool platformer, SetIntCallb
 }
 
 bool FRSetStarsPopup::setup(int stars, bool platformer, SetIntCallback callback) {
-    setTitle("Set Stars");
+    setTitle(platformer ? "Set Moons" : "Set Stars");
     m_noElasticity = true;
     m_stars = stars;
 
-    m_input = TextInput::create(150.0f, "Stars");
+    m_input = TextInput::create(150.0f, platformer ? "Moons" : "Stars");
     m_input->setCommonFilter(CommonFilter::Int);
     m_input->setPosition(125.0f, 80.0f);
     m_input->getInputNode()->setLabelPlaceholderColor({ 120, 170, 240 });
@@ -504,15 +476,59 @@ bool FRSetFeaturePopup::setup(FakeRateSaveData data, bool legacy, SetIntCallback
 
     auto menuRow = CCMenu::create();
     menuRow->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow->setPosition(150.0f, 80.0f + (data.difficulty > 5 || data.grandpaDemonOverride > 0 || data.demonsInBetweenOverride > 0 || data.gddpIntegrationOverride > 0 ? 5.0f : 0.0f));
+    menuRow->setPosition(150.0f, 80.0f + (data.difficulty > 5 || data.grandpaDemonOverride > 0 ||
+        data.demonsInBetweenOverride > 0 || data.gddpIntegrationOverride > 0 ? 5.0f : 0.0f));
     menuRow->setContentSize({ 300.0f, 50.0f });
     m_mainLayer->addChild(menuRow);
 
-    createFeatureToggle(menuRow, GJFeatureState::None);
-    createFeatureToggle(menuRow, GJFeatureState::Featured);
-    createFeatureToggle(menuRow, GJFeatureState::Epic);
-    createFeatureToggle(menuRow, GJFeatureState::Legendary);
-    createFeatureToggle(menuRow, GJFeatureState::Mythic);
+    for (int i = 0; i < 5; i++) {
+        auto feature = static_cast<GJFeatureState>(i);
+        auto difficultySprite = GJDifficultySprite::create(m_difficulty, GJDifficultyName::Long);
+        difficultySprite->updateFeatureState(feature);
+        if (Loader::get()->isModLoaded("uproxide.more_difficulties") && m_moreDifficultiesOverride > 0
+            && m_grandpaDemonOverride == 0 && m_demonsInBetweenOverride == 0) {
+            auto mdSprite = CCSprite::createWithSpriteFrameName((m_legacy ?
+                fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}_Legacy.png", m_moreDifficultiesOverride)
+                : fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}.png", m_moreDifficultiesOverride)).c_str());
+            mdSprite->setPosition(difficultySprite->getContentSize() / 2 + (m_legacy ? CCPoint { 0.0f, 0.0f } : CCPoint { 0.25f, -0.1f }));
+            difficultySprite->setOpacity(0);
+            difficultySprite->addChild(mdSprite);
+        }
+        if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && m_grandpaDemonOverride > 0) {
+            auto grdSprite = CCSprite::createWithSpriteFrameName(fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", m_grandpaDemonOverride - 1).c_str());
+            grdSprite->setPosition(difficultySprite->getContentSize() / 2);
+            difficultySprite->setOpacity(0);
+            difficultySprite->addChild(grdSprite);
+        }
+        if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && m_demonsInBetweenOverride > 0) {
+            auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn2_001.png",
+                m_demonsInBetweenOverride).c_str());
+            dibSprite->setPosition(difficultySprite->getContentSize() / 2 + FakeRate::getDIBOffset(m_demonsInBetweenOverride, GJDifficultyName::Long));
+            difficultySprite->setOpacity(0);
+            difficultySprite->addChild(dibSprite);
+        }
+        if (Loader::get()->isModLoaded("minemaker0430.gddp_integration") && m_gddpIntegrationOverride > 0) {
+            auto gddpSprite = CCSprite::createWithSpriteFrameName(FakeRate::getGDDPFrame(m_gddpIntegrationOverride, GJDifficultyName::Long).c_str());
+            gddpSprite->setAnchorPoint({ 0.5f, 1.0f });
+            gddpSprite->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.25f, 30.0f });
+            difficultySprite->setOpacity(0);
+            difficultySprite->addChild(gddpSprite);
+        }
+        auto toggle = CCMenuItemExt::createSpriteExtra(difficultySprite, [this, feature](CCMenuItemSpriteExtra* sender) {
+            if (sender == m_selected) return;
+            m_feature = feature;
+            FakeRate::toggle(m_selected->getNormalImage(), false);
+            if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(m_selected->getNormalImage(), 0)) particleSystem->setVisible(false);
+            FakeRate::toggle(sender->getNormalImage(), true);
+            if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(sender->getNormalImage(), 0)) particleSystem->setVisible(true);
+            m_selected = sender;
+        });
+        FakeRate::toggle(difficultySprite, feature == m_feature);
+        if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(difficultySprite, 0)) particleSystem->setVisible(feature == m_feature);
+        m_selected = feature == m_feature ? toggle : m_selected;
+        menuRow->addChild(toggle);
+    }
+
     menuRow->updateLayout();
 
     auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
@@ -523,50 +539,6 @@ bool FRSetFeaturePopup::setup(FakeRateSaveData data, bool legacy, SetIntCallback
     m_buttonMenu->addChild(confirmButton);
 
     return true;
-}
-
-void FRSetFeaturePopup::createFeatureToggle(CCMenu* menu, GJFeatureState feature) {
-    auto difficultySprite = GJDifficultySprite::create(m_difficulty, GJDifficultyName::Long);
-    difficultySprite->updateFeatureState(feature);
-    if (Loader::get()->isModLoaded("uproxide.more_difficulties") && m_moreDifficultiesOverride > 0 && m_grandpaDemonOverride == 0 && m_demonsInBetweenOverride == 0) {
-        auto mdSprite = CCSprite::createWithSpriteFrameName((m_legacy ? fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}_Legacy.png", m_moreDifficultiesOverride)
-            : fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}.png", m_moreDifficultiesOverride)).c_str());
-        mdSprite->setPosition(difficultySprite->getContentSize() / 2 + (m_legacy ? CCPoint { 0.0f, 0.0f } : CCPoint { 0.25f, -0.1f }));
-        difficultySprite->setOpacity(0);
-        difficultySprite->addChild(mdSprite);
-    }
-    if (Loader::get()->isModLoaded("itzkiba.grandpa_demon") && m_grandpaDemonOverride > 0) {
-        auto grdSprite = CCSprite::createWithSpriteFrameName(fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", m_grandpaDemonOverride - 1).c_str());
-        grdSprite->setPosition(difficultySprite->getContentSize() / 2);
-        difficultySprite->setOpacity(0);
-        difficultySprite->addChild(grdSprite);
-    }
-    if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && m_demonsInBetweenOverride > 0) {
-        auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn2_001.png", m_demonsInBetweenOverride).c_str());
-        dibSprite->setPosition(difficultySprite->getContentSize() / 2 + FakeRate::getDIBOffset(m_demonsInBetweenOverride, GJDifficultyName::Long));
-        difficultySprite->setOpacity(0);
-        difficultySprite->addChild(dibSprite);
-    }
-    if (Loader::get()->isModLoaded("minemaker0430.gddp_integration") && m_gddpIntegrationOverride > 0) {
-        auto gddpSprite = CCSprite::createWithSpriteFrameName(FakeRate::getGDDPFrame(m_gddpIntegrationOverride, GJDifficultyName::Long).c_str());
-        gddpSprite->setAnchorPoint({ 0.5f, 1.0f });
-        gddpSprite->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.25f, 30.0f });
-        difficultySprite->setOpacity(0);
-        difficultySprite->addChild(gddpSprite);
-    }
-    auto toggle = CCMenuItemExt::createSpriteExtra(difficultySprite, [this, feature](CCMenuItemSpriteExtra* sender) {
-        if (sender == m_selected) return;
-        m_feature = feature;
-        FakeRate::toggle(m_selected->getNormalImage(), false);
-        if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(m_selected->getNormalImage(), 0)) particleSystem->setVisible(false);
-        FakeRate::toggle(sender->getNormalImage(), true);
-        if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(sender->getNormalImage(), 0)) particleSystem->setVisible(true);
-        m_selected = sender;
-    });
-    FakeRate::toggle(difficultySprite, feature == m_feature);
-    if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(difficultySprite, 0)) particleSystem->setVisible(feature == m_feature);
-    m_selected = feature == m_feature ? toggle : m_selected;
-    menu->addChild(toggle);
 }
 
 FRGRDPopup* FRGRDPopup::create(int grandpaDemonOverride, SetIntCallback callback) {
@@ -584,27 +556,29 @@ bool FRGRDPopup::setup(int grandpaDemonOverride, SetIntCallback callback) {
     m_noElasticity = true;
     m_grandpaDemonOverride = grandpaDemonOverride;
 
-    auto menuRow1 = CCMenu::create();
-    menuRow1->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow1->setPosition(125.0f, 140.0f);
-    menuRow1->setContentSize({ 250.0f, 65.0f });
-    m_mainLayer->addChild(menuRow1);
+    auto table = TableNode::create(3, 2);
+    table->setAnchorPoint({ 0.5f, 0.5f });
+    table->setColumnLayout(ColumnLayout::create()->setAxisReverse(true));
+    table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
+    table->setRowHeight(65.0f);
+    table->setContentSize({ 250.0f, 130.0f });
+    table->setPosition(125.0f, 107.5f);
+    m_mainLayer->addChild(table);
 
-    createGRDToggle(menuRow1, 1);
-    createGRDToggle(menuRow1, 2);
-    createGRDToggle(menuRow1, 3);
-    menuRow1->updateLayout();
+    for (int i = 1; i < 7; i++) {
+        auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", i - 1).c_str(), 1.0f,
+            [this, i](CCMenuItemSpriteExtra* sender) {
+                m_grandpaDemonOverride = sender != m_selected ? i : 0;
+                if (m_selected) FakeRate::toggle(m_selected->getNormalImage(), false);
+                if (sender != m_selected) FakeRate::toggle(sender->getNormalImage(), true);
+                m_selected = sender != m_selected ? sender : nullptr;
+            });
+        FakeRate::toggle(toggle->getNormalImage(), i == m_grandpaDemonOverride);
+        m_selected = i == m_grandpaDemonOverride ? toggle : m_selected;
+        table->addButton(toggle);
+    }
 
-    auto menuRow2 = CCMenu::create();
-    menuRow2->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow2->setPosition(125.0f, 75.0f);
-    menuRow2->setContentSize({ 250.0f, 65.0f });
-    m_mainLayer->addChild(menuRow2);
-
-    createGRDToggle(menuRow2, 4);
-    createGRDToggle(menuRow2, 5);
-    createGRDToggle(menuRow2, 6);
-    menuRow2->updateLayout();
+    table->updateAllLayouts();
 
     auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
         callback(m_grandpaDemonOverride);
@@ -614,19 +588,6 @@ bool FRGRDPopup::setup(int grandpaDemonOverride, SetIntCallback callback) {
     m_buttonMenu->addChild(confirmButton);
 
     return true;
-}
-
-void FRGRDPopup::createGRDToggle(CCMenu* menu, int grandpaDemonOverride) {
-    auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", grandpaDemonOverride - 1).c_str(), 1.0f,
-        [this, grandpaDemonOverride](CCMenuItemSpriteExtra* sender) {
-            m_grandpaDemonOverride = sender != m_selected ? grandpaDemonOverride : 0;
-            if (m_selected) FakeRate::toggle(m_selected->getNormalImage(), false);
-            if (sender != m_selected) FakeRate::toggle(sender->getNormalImage(), true);
-            m_selected = sender != m_selected ? sender : nullptr;
-        });
-    FakeRate::toggle(toggle->getNormalImage(), grandpaDemonOverride == m_grandpaDemonOverride);
-    m_selected = grandpaDemonOverride == m_grandpaDemonOverride ? toggle : m_selected;
-    menu->addChild(toggle);
 }
 
 FRDIBPopup* FRDIBPopup::create(int demonsInBetweenOverride, SetIntCallback callback) {
@@ -644,57 +605,29 @@ bool FRDIBPopup::setup(int demonsInBetweenOverride, SetIntCallback callback) {
     m_noElasticity = true;
     m_demonsInBetweenOverride = demonsInBetweenOverride;
 
-    auto menuRow1 = CCMenu::create();
-    menuRow1->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow1->setPosition(175.0f, 250.0f);
-    menuRow1->setContentSize({ 350.0f, 60.0f });
-    m_mainLayer->addChild(menuRow1);
+    auto table = TableNode::create(5, 4);
+    table->setAnchorPoint({ 0.5f, 0.5f });
+    table->setColumnLayout(ColumnLayout::create()->setAxisReverse(true));
+    table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
+    table->setRowHeight(60.0f);
+    table->setContentSize({ 350.0f, 240.0f });
+    table->setPosition(175.0f, 160.0f);
+    m_mainLayer->addChild(table);
 
-    createDIBToggle(menuRow1, 1);
-    createDIBToggle(menuRow1, 2);
-    createDIBToggle(menuRow1, 3);
-    createDIBToggle(menuRow1, 4);
-    createDIBToggle(menuRow1, 5);
-    menuRow1->updateLayout();
+    for (int i = 1; i < 21; i++) {
+        auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02}_btn2_001.png", i).c_str(), 1.0f,
+            [this, i](CCMenuItemSpriteExtra* sender) {
+                m_demonsInBetweenOverride = sender != m_selected ? i : 0;
+                if (m_selected) FakeRate::toggle(m_selected->getNormalImage(), false);
+                if (sender != m_selected) FakeRate::toggle(sender->getNormalImage(), true);
+                m_selected = sender != m_selected ? sender : nullptr;
+            });
+        FakeRate::toggle(toggle->getNormalImage(), i == m_demonsInBetweenOverride);
+        m_selected = i == m_demonsInBetweenOverride ? toggle : m_selected;
+        table->addButton(toggle);
+    }
 
-    auto menuRow2 = CCMenu::create();
-    menuRow2->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow2->setPosition(175.0f, 190.0f);
-    menuRow2->setContentSize({ 350.0f, 60.0f });
-    m_mainLayer->addChild(menuRow2);
-
-    createDIBToggle(menuRow2, 6);
-    createDIBToggle(menuRow2, 7);
-    createDIBToggle(menuRow2, 8);
-    createDIBToggle(menuRow2, 9);
-    createDIBToggle(menuRow2, 10);
-    menuRow2->updateLayout();
-
-    auto menuRow3 = CCMenu::create();
-    menuRow3->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow3->setPosition(175.0f, 130.0f);
-    menuRow3->setContentSize({ 350.0f, 60.0f });
-    m_mainLayer->addChild(menuRow3);
-
-    createDIBToggle(menuRow3, 11);
-    createDIBToggle(menuRow3, 12);
-    createDIBToggle(menuRow3, 13);
-    createDIBToggle(menuRow3, 14);
-    createDIBToggle(menuRow3, 15);
-    menuRow3->updateLayout();
-
-    auto menuRow4 = CCMenu::create();
-    menuRow4->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow4->setPosition(175.0f, 70.0f);
-    menuRow4->setContentSize({ 350.0f, 60.0f });
-    m_mainLayer->addChild(menuRow4);
-
-    createDIBToggle(menuRow4, 16);
-    createDIBToggle(menuRow4, 17);
-    createDIBToggle(menuRow4, 18);
-    createDIBToggle(menuRow4, 19);
-    createDIBToggle(menuRow4, 20);
-    menuRow4->updateLayout();
+    table->updateAllLayouts();
 
     auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
         callback(m_demonsInBetweenOverride);
@@ -704,19 +637,6 @@ bool FRDIBPopup::setup(int demonsInBetweenOverride, SetIntCallback callback) {
     m_buttonMenu->addChild(confirmButton);
 
     return true;
-}
-
-void FRDIBPopup::createDIBToggle(CCMenu* menu, int demonsInBetweenOverride) {
-    auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02}_btn2_001.png", demonsInBetweenOverride).c_str(),
-        1.0f, [this, demonsInBetweenOverride](CCMenuItemSpriteExtra* sender) {
-            m_demonsInBetweenOverride = sender != m_selected ? demonsInBetweenOverride : 0;
-            if (m_selected) FakeRate::toggle(m_selected->getNormalImage(), false);
-            if (sender != m_selected) FakeRate::toggle(sender->getNormalImage(), true);
-            m_selected = sender != m_selected ? sender : nullptr;
-        });
-    FakeRate::toggle(toggle->getNormalImage(), demonsInBetweenOverride == m_demonsInBetweenOverride);
-    m_selected = demonsInBetweenOverride == m_demonsInBetweenOverride ? toggle : m_selected;
-    menu->addChild(toggle);
 }
 
 FRGDDPPopup* FRGDDPPopup::create(int gddpIntegrationOverride, SetIntCallback callback) {
@@ -734,44 +654,29 @@ bool FRGDDPPopup::setup(int gddpIntegrationOverride, SetIntCallback callback) {
     m_noElasticity = true;
     m_gddpIntegrationOverride = gddpIntegrationOverride;
 
-    auto menuRow1 = CCMenu::create();
-    menuRow1->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow1->setPosition(175.0f, 190.0f);
-    menuRow1->setContentSize({ 350.0f, 60.0f });
-    m_mainLayer->addChild(menuRow1);
+    auto table = TableNode::create(5, 3);
+    table->setAnchorPoint({ 0.5f, 0.5f });
+    table->setColumnLayout(ColumnLayout::create()->setAxisReverse(true));
+    table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
+    table->setRowHeight(60.0f);
+    table->setContentSize({ 350.0f, 180.0f });
+    table->setPosition(175.0f, 130.0f);
+    m_mainLayer->addChild(table);
 
-    createGDDPToggle(menuRow1, 1);
-    createGDDPToggle(menuRow1, 2);
-    createGDDPToggle(menuRow1, 3);
-    createGDDPToggle(menuRow1, 4);
-    createGDDPToggle(menuRow1, 5);
-    menuRow1->updateLayout();
+    for (int i = 1; i < 16; i++) {
+        auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(FakeRate::getGDDPFrame(i, GJDifficultyName::Long).c_str(), 1.0f,
+            [this, i](CCMenuItemSpriteExtra* sender) {
+                m_gddpIntegrationOverride = sender != m_selected ? i : 0;
+                if (m_selected) FakeRate::toggle(m_selected->getNormalImage(), false);
+                if (sender != m_selected) FakeRate::toggle(sender->getNormalImage(), true);
+                m_selected = sender != m_selected ? sender : nullptr;
+            });
+        FakeRate::toggle(toggle->getNormalImage(), i == m_gddpIntegrationOverride);
+        m_selected = i == m_gddpIntegrationOverride ? toggle : m_selected;
+        table->addButton(toggle);
+    }
 
-    auto menuRow2 = CCMenu::create();
-    menuRow2->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow2->setPosition(175.0f, 130.0f);
-    menuRow2->setContentSize({ 350.0f, 60.0f });
-    m_mainLayer->addChild(menuRow2);
-
-    createGDDPToggle(menuRow2, 6);
-    createGDDPToggle(menuRow2, 7);
-    createGDDPToggle(menuRow2, 8);
-    createGDDPToggle(menuRow2, 9);
-    createGDDPToggle(menuRow2, 10);
-    menuRow2->updateLayout();
-
-    auto menuRow3 = CCMenu::create();
-    menuRow3->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow3->setPosition(175.0f, 70.0f);
-    menuRow3->setContentSize({ 350.0f, 60.0f });
-    m_mainLayer->addChild(menuRow3);
-
-    createGDDPToggle(menuRow3, 11);
-    createGDDPToggle(menuRow3, 12);
-    createGDDPToggle(menuRow3, 13);
-    createGDDPToggle(menuRow3, 14);
-    createGDDPToggle(menuRow3, 15);
-    menuRow3->updateLayout();
+    table->updateAllLayouts();
 
     auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
         callback(m_gddpIntegrationOverride);
@@ -781,17 +686,4 @@ bool FRGDDPPopup::setup(int gddpIntegrationOverride, SetIntCallback callback) {
     m_buttonMenu->addChild(confirmButton);
 
     return true;
-}
-
-void FRGDDPPopup::createGDDPToggle(CCMenu* menu, int gddpIntegrationOverride) {
-    auto toggle = CCMenuItemExt::createSpriteExtraWithFrameName(FakeRate::getGDDPFrame(gddpIntegrationOverride, GJDifficultyName::Long).c_str(), 1.0f,
-        [this, gddpIntegrationOverride](CCMenuItemSpriteExtra* sender) {
-            m_gddpIntegrationOverride = sender != m_selected ? gddpIntegrationOverride : 0;
-            if (m_selected) FakeRate::toggle(m_selected->getNormalImage(), false);
-            if (sender != m_selected) FakeRate::toggle(sender->getNormalImage(), true);
-            m_selected = sender != m_selected ? sender : nullptr;
-        });
-    FakeRate::toggle(toggle->getNormalImage(), gddpIntegrationOverride == m_gddpIntegrationOverride);
-    m_selected = gddpIntegrationOverride == m_gddpIntegrationOverride ? toggle : m_selected;
-    menu->addChild(toggle);
 }

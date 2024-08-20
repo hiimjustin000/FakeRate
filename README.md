@@ -3,7 +3,7 @@ A mod that allows you to assign a fake rating to online levels.
 
 ## Features
 - Ability to give online levels a fake rating, which can be done either through a button in the level info screen or by editing save data
-- A popup that allows you to independently rate the level's difficulty, stars, feature status, and coin verification status
+- A popup that allows you to independently rate the level's difficulty, stars/moons, feature status, and coin verification status
 - Support for More Difficulties, Grandpa Demon, Demons In Between, and GDDP Integration
 
 ## Credits

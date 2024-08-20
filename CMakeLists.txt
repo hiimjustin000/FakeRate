@@ -4,13 +4,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(FakeRate VERSION 1.4.3)
+project(FakeRate VERSION 1.4.4)
 
 add_library(${PROJECT_NAME} SHARED
     src/FakeRate.cpp
     src/FREditPopup.cpp
     src/FREffects.cpp
     src/main.cpp
+    src/TableNode.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

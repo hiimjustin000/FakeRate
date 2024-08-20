@@ -3,7 +3,7 @@ A mod that allows you to assign a fake rating to online levels.
 
 ## Features
 - Ability to give online levels a fake rating, which can be done either through a button in the level info screen or by editing save data
-- A popup that allows you to independently rate the level's difficulty, stars, feature status, and coin verification status
+- A popup that allows you to independently rate the level's difficulty, stars/moons, feature status, and coin verification status
 - Support for More Difficulties, Grandpa Demon, Demons In Between, and GDDP Integration
 
 ## Credits
@@ -13,10 +13,10 @@ A mod that allows you to assign a fake rating to online levels.
 - [hiimjustin000](user:7466002) - Creator of the Demons In Between mod and this mod
 
 ## Gallery
-![Fake Rate Popup](hiimjustin000.fake_rate/fake-rate-popup.png?scale=0.9)\
-![Difficulty Popup](hiimjustin000.fake_rate/difficulty-popup.png?scale=0.9)\
+![Fake Rate Popup](hiimjustin000.fake_rate/fake-rate-popup.png?scale=0.9375)\
+![Difficulty Popup](hiimjustin000.fake_rate/difficulty-popup.png?scale=0.9375)\
 ![Grandpa Demon Popup](hiimjustin000.fake_rate/grd-popup.png?scale=1.2)\
-![Demons In Between Popup](hiimjustin000.fake_rate/dib-popup.png?scale=0.9)\
-![GDDP Integration Popup](hiimjustin000.fake_rate/gddp-popup.png?scale=0.9)\
-![Stars Popup](hiimjustin000.fake_rate/stars-popup.png?scale=1.2)\
-![Feature Popup](hiimjustin000.fake_rate/feature-popup.png?scale=0.9)
+![Demons In Between Popup](hiimjustin000.fake_rate/dib-popup.png?scale=0.9231)\
+![GDDP Integration Popup](hiimjustin000.fake_rate/gddp-popup.png?scale=0.9231)\
+![Stars Popup](hiimjustin000.fake_rate/stars-popup.png?scale=1.25)\
+![Feature Popup](hiimjustin000.fake_rate/feature-popup.png?scale=0.9375)
