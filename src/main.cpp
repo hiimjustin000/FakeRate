@@ -356,7 +356,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         auto starsRequested = m_level->m_starsRequested;
         auto stars = m_level->m_stars.value();
         if (remove && stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9)) moreDifficultiesOverride = starsRequested;
-        if (remove && stars == 4 || stars == 7 || stars == 9) moreDifficultiesOverride = stars;
+        if (remove && (stars == 4 || stars == 7 || stars == 9)) moreDifficultiesOverride = stars;
         if ((moreDifficultiesOverride != 4 && moreDifficultiesOverride != 7 && moreDifficultiesOverride != 9)
             || gdo > 0 || dbo > 0 || gio > 0) return;
 

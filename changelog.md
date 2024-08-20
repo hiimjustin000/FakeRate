@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.4.5 (2024-08-19)
+- Fixed a bug where rating a level with a More Difficulties difficulty to a normal difficulty would not correctly update the difficulty face
+
 ## v1.4.4 (2024-08-19)
 - Fixed the weird positioning of difficulty faces in the difficulty selection popup if More Difficulties is disabled
 - Changed references of stars to moons in the set stars popup if the level is in platformer mode
