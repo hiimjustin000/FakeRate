@@ -38,7 +38,7 @@ class FRSetDifficultyPopup : public Popup<FakeRateSaveData, bool, SetDifficultyC
 protected:
     inline static std::vector<std::pair<int, int>> DIFFICULTIES = {
         { 0, 0 }, { -1, 0 }, { 1, 0 }, { 2, 0 }, { 3, 4 }, { 3, 0 }, { 4, 0 }, { 4, 7 },
-        { 5, 0 }, { 5, 9 }, { 6, 0 }, { 7, 0 }, { 8, 0 }, { 9, 0 }, { 10, 0 }
+        { 5, 0 }, { 5, 9 }, { 7, 0 }, { 8, 0 }, { 6, 0 }, { 9, 0 }, { 10, 0 }
     };
 
     int m_difficulty;

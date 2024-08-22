@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.4.6 (2024-08-19)
+- Fixed a bug where the hard demon face would not display before the other demon faces in the difficulty selection popup
+
 ## v1.4.5 (2024-08-19)
 - Fixed a bug where rating a level with a More Difficulties difficulty to a normal difficulty would not correctly update the difficulty face
 
