@@ -1,4 +1,9 @@
 # Fake Rate Changelog
+## v1.4.7 (2024-08-29)
+- Added Demons In Between legendary and mythic difficulties
+- Added Animated Fire support to the fake rate popup
+- Fixed a bug where removing a fake rate would not apply the background color correctly
+
 ## v1.4.6 (2024-08-19)
 - Fixed a bug where the hard demon face would not display before the other demon faces in the difficulty selection popup
 

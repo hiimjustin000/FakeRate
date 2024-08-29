@@ -15,6 +15,24 @@ struct FakeRateSaveData {
 };
 
 class FakeRate {
+private:
+    inline static std::unordered_map<std::string, int> GDDP_INDICES = {
+        { "Beginner", 1 },
+        { "Bronze", 2 },
+        { "Silver", 3 },
+        { "Gold", 4 },
+        { "Amber", 5 },
+        { "Platinum", 6 },
+        { "Sapphire", 7 },
+        { "Jade", 8 },
+        { "Emerald", 9 },
+        { "Ruby", 10 },
+        { "Diamond", 11 },
+        { "Onyx", 12 },
+        { "Amethyst", 13 },
+        { "Azurite", 14 },
+        { "Obsidian", 15 }
+    };
 public:
     static int getBaseCurrency(int);
     static int getDifficultyFromLevel(GJGameLevel*);

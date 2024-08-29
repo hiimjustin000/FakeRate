@@ -13,6 +13,7 @@ TableNode* TableNode::create(int columns, int rows) {
 bool TableNode::init(int columns, int rows) {
     if (!CCNode::init()) return false;
 
+    setAnchorPoint({ 0.5f, 0.5f });
     m_menus = CCArray::create();
     m_menus->retain();
     m_columns = columns;

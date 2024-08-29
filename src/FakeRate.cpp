@@ -99,25 +99,26 @@ CCPoint FakeRate::getDIBOffset(int difficulty, GJDifficultyName name) {
 
 int FakeRate::getGRDOverride(CCSprite* sprite) {
     auto sprName = getSpriteName(sprite);
-    if (sprName.substr(sprName.size() - 9) == "_text.png") sprName = sprName.substr(0, sprName.size() - 9);
 
     auto pos = sprName.find("GrD_demon");
     if (pos != std::string::npos) {
         auto num = sprName.substr(pos + 9);
-        return std::stoi(num) + 1;
+        auto str = numFromString<int>(num);
+        if (str.has_value()) return str.value() + 1;
+        else return 0;
     }
     else return 0;
 }
 
 int FakeRate::getDIBOverride(CCSprite* sprite) {
     auto sprName = getSpriteName(sprite);
-    if (sprName.substr(sprName.size() - 12) == "_btn_001.png") sprName = sprName.substr(0, sprName.size() - 12);
-    else if (sprName.substr(sprName.size() - 13) == "_btn2_001.png") sprName = sprName.substr(0, sprName.size() - 13);
 
     auto pos = sprName.find("DIB_");
     if (pos != std::string::npos) {
         auto num = sprName.substr(pos + 4);
-        return std::stoi(num);
+        auto str = numFromString<int>(num);
+        if (str.has_value()) return str.value();
+        else return 0;
     }
     else return 0;
 }
@@ -131,21 +132,8 @@ int FakeRate::getGDDPOverride(CCSprite* sprite) {
     auto pos = sprName.find("DP_");
     if (pos != std::string::npos) {
         auto num = sprName.substr(pos + 3);
-        if (num == "Beginner") return 1;
-        else if (num == "Bronze") return 2;
-        else if (num == "Silver") return 3;
-        else if (num == "Gold") return 4;
-        else if (num == "Amber") return 5;
-        else if (num == "Platinum") return 6;
-        else if (num == "Sapphire") return 7;
-        else if (num == "Jade") return 8;
-        else if (num == "Emerald") return 9;
-        else if (num == "Ruby") return 10;
-        else if (num == "Diamond") return 11;
-        else if (num == "Onyx") return 12;
-        else if (num == "Amethyst") return 13;
-        else if (num == "Azurite") return 14;
-        else if (num == "Obsidian") return 15;
+        auto str = GDDP_INDICES.find(num);
+        if (str != GDDP_INDICES.end()) return str->second;
         else return 0;
     }
     else return 0;

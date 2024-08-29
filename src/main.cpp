@@ -9,6 +9,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         CCParticleSystemQuad* m_grandpaParticles1;
         CCParticleSystemQuad* m_grandpaParticles2;
         ccColor3B m_backgroundColor;
+        bool m_fakeRateApplied;
     };
 
     static void onModify(auto& self) {
@@ -73,7 +74,7 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
                 stars == 0 && (starsRequested == 4 || starsRequested == 7 || starsRequested == 9) ? starsRequested : 0 : 0,
             .grandpaDemonOverride = grandpaDemon && (!gddpOverride || !gddpDifficulty) ? FakeRate::getGRDOverride(grandpaDemon) : 0,
             .demonsInBetweenOverride = demonInBetween ? FakeRate::getDIBOverride(demonInBetween) : 0,
-            .gddpIntegrationOverride = gddpDifficulty && (!grandpaDemon || gddpOverride) ? FakeRate::getGDDPOverride(gddpDifficulty) : 0,
+            .gddpIntegrationOverride = gddpDifficulty && (!grandpaDemon || gddpOverride) && !demonInBetween ? FakeRate::getGDDPOverride(gddpDifficulty) : 0,
             .coins = m_level->m_coinsVerified > 0
         };
     }
@@ -99,6 +100,14 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
             .gddpIntegrationOverride = gio,
             .coins = coins
         };
+
+        if (!fields->m_fakeRateApplied) {
+            fields->m_fakeRateApplied = true;
+            fields->m_backgroundColor = static_cast<CCSprite*>(getChildByID("background"))->getColor();
+            auto gdutils = Loader::get()->getLoadedMod("gdutilsdevs.gdutils");
+            if (gdutils && gdutils->getSettingValue<bool>("activate-background"))
+                fields->m_backgroundColor = gdutils->getSettingValue<ccColor3B>("background");
+        }
 
         fields->m_grandpaBackground1 = static_cast<CCSprite*>(getChildByID("grandpa-background-1"_spr));
         fields->m_grandpaBackground2 = static_cast<CCSprite*>(getChildByID("grandpa-background-2"_spr));
@@ -326,7 +335,11 @@ class $modify(FRLevelInfoLayer, LevelInfoLayer) {
         if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && dbo > 0 && dbo < 21) {
             if (auto fakeBetweenDemon = static_cast<CCSprite*>(getChildByID("between-difficulty-sprite"_spr))) fakeBetweenDemon->removeFromParent();
 
-            auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn2_001.png", dbo).c_str());
+            auto demonsInBetween = Loader::get()->getLoadedMod("hiimjustin000.demons_in_between");
+            auto dibFeature = "";
+            if (feature == 3 && demonsInBetween->getSettingValue<bool>("enable-legendary")) dibFeature = "_4";
+            else if (feature == 4 && demonsInBetween->getSettingValue<bool>("enable-mythic")) dibFeature = "_5";
+            auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}{}_btn2_001.png", dbo, dibFeature).c_str());
             dibSprite->setID("between-difficulty-sprite"_spr);
             dibSprite->setPosition(position + FakeRate::getDIBOffset(dbo, GJDifficultyName::Long));
             addChild(dibSprite, 3);
@@ -539,7 +552,11 @@ class $modify(FRLevelCell, LevelCell) {
                 }
 
                 if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && dbo > 0 && dbo < 21) {
-                    auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn_001.png", dbo).c_str());
+                    auto demonsInBetween = Loader::get()->getLoadedMod("hiimjustin000.demons_in_between");
+                    auto dibFeature = "";
+                    if (fakeRateData.feature == 3 && demonsInBetween->getSettingValue<bool>("enable-legendary")) dibFeature = "_4";
+                    else if (fakeRateData.feature == 4 && demonsInBetween->getSettingValue<bool>("enable-mythic")) dibFeature = "_5";
+                    auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}{}_btn_001.png", dbo, dibFeature).c_str());
                     dibSprite->setID("between-difficulty-sprite"_spr);
                     dibSprite->setPosition(position + FakeRate::getDIBOffset(dbo, GJDifficultyName::Short));
                     difficultyContainer->addChild(dibSprite, 3);

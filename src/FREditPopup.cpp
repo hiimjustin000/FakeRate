@@ -226,6 +226,29 @@ void FREditPopup::updateLabels() {
         coin->setColor(m_coins ? ccColor3B { 255, 255, 255 } : ccColor3B { 255, 175, 75 });
     }
     m_difficultySprite->setOpacity(255);
+    if (Loader::get()->isModLoaded("uproxide.animated_fire")) switch (m_feature) {
+        case 2: {
+            auto fire = FireSprite::create(GJFeatureState::Epic);
+            fire->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 16.875f });
+            if (auto oldFire = getChildBySpriteFrameName(m_difficultySprite, "GJ_epicCoin_001.png")) oldFire->setVisible(false);
+            m_difficultySprite->addChild(fire, -1);
+            break;
+        }
+        case 3: {
+            auto fire = FireSprite::create(GJFeatureState::Legendary);
+            fire->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 15.875f });
+            if (auto oldFire = getChildBySpriteFrameName(m_difficultySprite, "GJ_epicCoin2_001.png")) oldFire->setVisible(false);
+            m_difficultySprite->addChild(fire, -1);
+            break;
+        }
+        case 4: {
+            auto fire = FireSprite::create(GJFeatureState::Mythic);
+            fire->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 15.875f });
+            if (auto oldFire = getChildBySpriteFrameName(m_difficultySprite, "GJ_epicCoin3_001.png")) oldFire->setVisible(false);
+            m_difficultySprite->addChild(fire, -1);
+            break;
+        }
+    }
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         if (m_moreDifficultiesOverride == 4 || m_moreDifficultiesOverride == 7 || m_moreDifficultiesOverride == 9) {
             m_mdSprite->setDisplayFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
@@ -252,8 +275,12 @@ void FREditPopup::updateLabels() {
     }
     if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between")) {
         if (m_demonsInBetweenOverride > 0 && m_demonsInBetweenOverride < 21) {
+            auto demonsInBetween = Loader::get()->getLoadedMod("hiimjustin000.demons_in_between");
+            auto dibFeature = "";
+            if (m_feature == 3 && demonsInBetween->getSettingValue<bool>("enable-legendary")) dibFeature = "_4";
+            else if (m_feature == 4 && demonsInBetween->getSettingValue<bool>("enable-mythic")) dibFeature = "_5";
             m_dibSprite->setDisplayFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
-                fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn2_001.png", m_demonsInBetweenOverride).c_str()));
+                fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}{}_btn2_001.png", m_demonsInBetweenOverride, dibFeature).c_str()));
             m_dibSprite->setPosition(m_difficultySprite->getPosition() + FakeRate::getDIBOffset(m_demonsInBetweenOverride, GJDifficultyName::Long));
             m_dibSprite->setVisible(true);
             if (m_mdSprite) m_mdSprite->setVisible(false);
@@ -299,7 +326,6 @@ bool FRSetDifficultyPopup::setup(FakeRateSaveData data, bool legacy, SetDifficul
     m_legacy = legacy;
 
     auto table = TableNode::create(Loader::get()->isModLoaded("uproxide.more_difficulties") ? 5 : 4, 3);
-    table->setAnchorPoint({ 0.5f, 0.5f });
     table->setColumnLayout(ColumnLayout::create()->setAxisReverse(true));
     table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     table->setRowHeight(63.0f);
@@ -485,6 +511,29 @@ bool FRSetFeaturePopup::setup(FakeRateSaveData data, bool legacy, SetIntCallback
         auto feature = static_cast<GJFeatureState>(i);
         auto difficultySprite = GJDifficultySprite::create(m_difficulty, GJDifficultyName::Long);
         difficultySprite->updateFeatureState(feature);
+        if (Loader::get()->isModLoaded("uproxide.animated_fire")) switch (i) {
+            case 2: {
+                auto fire = FireSprite::create(GJFeatureState::Epic);
+                fire->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 16.875f });
+                if (auto oldFire = getChildBySpriteFrameName(difficultySprite, "GJ_epicCoin_001.png")) oldFire->setVisible(false);
+                difficultySprite->addChild(fire, -1);
+                break;
+            }
+            case 3: {
+                auto fire = FireSprite::create(GJFeatureState::Legendary);
+                fire->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 15.875f });
+                if (auto oldFire = getChildBySpriteFrameName(difficultySprite, "GJ_epicCoin2_001.png")) oldFire->setVisible(false);
+                difficultySprite->addChild(fire, -1);
+                break;
+            }
+            case 4: {
+                auto fire = FireSprite::create(GJFeatureState::Mythic);
+                fire->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 15.875f });
+                if (auto oldFire = getChildBySpriteFrameName(difficultySprite, "GJ_epicCoin3_001.png")) oldFire->setVisible(false);
+                difficultySprite->addChild(fire, -1);
+                break;
+            }
+        }
         if (Loader::get()->isModLoaded("uproxide.more_difficulties") && m_moreDifficultiesOverride > 0
             && m_grandpaDemonOverride == 0 && m_demonsInBetweenOverride == 0) {
             auto mdSprite = CCSprite::createWithSpriteFrameName((m_legacy ?
@@ -501,8 +550,12 @@ bool FRSetFeaturePopup::setup(FakeRateSaveData data, bool legacy, SetIntCallback
             difficultySprite->addChild(grdSprite);
         }
         if (Loader::get()->isModLoaded("hiimjustin000.demons_in_between") && m_demonsInBetweenOverride > 0) {
-            auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}_btn2_001.png",
-                m_demonsInBetweenOverride).c_str());
+            auto demonsInBetween = Loader::get()->getLoadedMod("hiimjustin000.demons_in_between");
+            auto dibFeature = "";
+            if (i == 3 && demonsInBetween->getSettingValue<bool>("enable-legendary")) dibFeature = "_4";
+            else if (i == 4 && demonsInBetween->getSettingValue<bool>("enable-mythic")) dibFeature = "_5";
+            auto dibSprite = CCSprite::createWithSpriteFrameName(fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}{}_btn2_001.png",
+                m_demonsInBetweenOverride, dibFeature).c_str());
             dibSprite->setPosition(difficultySprite->getContentSize() / 2 + FakeRate::getDIBOffset(m_demonsInBetweenOverride, GJDifficultyName::Long));
             difficultySprite->setOpacity(0);
             difficultySprite->addChild(dibSprite);
@@ -557,7 +610,6 @@ bool FRGRDPopup::setup(int grandpaDemonOverride, SetIntCallback callback) {
     m_grandpaDemonOverride = grandpaDemonOverride;
 
     auto table = TableNode::create(3, 2);
-    table->setAnchorPoint({ 0.5f, 0.5f });
     table->setColumnLayout(ColumnLayout::create()->setAxisReverse(true));
     table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     table->setRowHeight(65.0f);
@@ -606,7 +658,6 @@ bool FRDIBPopup::setup(int demonsInBetweenOverride, SetIntCallback callback) {
     m_demonsInBetweenOverride = demonsInBetweenOverride;
 
     auto table = TableNode::create(5, 4);
-    table->setAnchorPoint({ 0.5f, 0.5f });
     table->setColumnLayout(ColumnLayout::create()->setAxisReverse(true));
     table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     table->setRowHeight(60.0f);
@@ -655,7 +706,6 @@ bool FRGDDPPopup::setup(int gddpIntegrationOverride, SetIntCallback callback) {
     m_gddpIntegrationOverride = gddpIntegrationOverride;
 
     auto table = TableNode::create(5, 3);
-    table->setAnchorPoint({ 0.5f, 0.5f });
     table->setColumnLayout(ColumnLayout::create()->setAxisReverse(true));
     table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     table->setRowHeight(60.0f);
