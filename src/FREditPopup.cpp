@@ -27,6 +27,11 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
     m_difficultySprite->setPositionX(60.0f);
     m_mainLayer->addChild(m_difficultySprite);
 
+    if (Loader::get()->isModLoaded("uproxide.animated_fire")) {
+        m_fireSprite = FireSprite::create(GJFeatureState::Epic);
+        m_fireSprite->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 16.875f });
+        m_difficultySprite->addChild(m_fireSprite, -1);
+    }
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         m_legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         m_mdSprite = CCSprite::createWithSpriteFrameName(m_legacy ?
@@ -212,6 +217,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
 }
 
 void FREditPopup::updateLabels() {
+    if (m_fireSprite && m_difficultySprite->m_featureState != (GJFeatureState)m_feature) m_fireSprite->retain();
     m_difficultySprite->updateFeatureState((GJFeatureState)m_feature);
     m_difficultySprite->updateDifficultyFrame(m_difficulty, GJDifficultyName::Long);
     auto isDemon = m_difficulty > 5 || m_grandpaDemonOverride > 0 || m_demonsInBetweenOverride > 0 || m_gddpIntegrationOverride > 0;
@@ -226,28 +232,13 @@ void FREditPopup::updateLabels() {
         coin->setColor(m_coins ? ccColor3B { 255, 255, 255 } : ccColor3B { 255, 175, 75 });
     }
     m_difficultySprite->setOpacity(255);
-    if (Loader::get()->isModLoaded("uproxide.animated_fire")) switch (m_feature) {
-        case 2: {
-            auto fire = FireSprite::create(GJFeatureState::Epic);
-            fire->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 16.875f });
-            if (auto oldFire = getChildBySpriteFrameName(m_difficultySprite, "GJ_epicCoin_001.png")) oldFire->setVisible(false);
-            m_difficultySprite->addChild(fire, -1);
-            break;
-        }
-        case 3: {
-            auto fire = FireSprite::create(GJFeatureState::Legendary);
-            fire->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 15.875f });
-            if (auto oldFire = getChildBySpriteFrameName(m_difficultySprite, "GJ_epicCoin2_001.png")) oldFire->setVisible(false);
-            m_difficultySprite->addChild(fire, -1);
-            break;
-        }
-        case 4: {
-            auto fire = FireSprite::create(GJFeatureState::Mythic);
-            fire->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 15.875f });
-            if (auto oldFire = getChildBySpriteFrameName(m_difficultySprite, "GJ_epicCoin3_001.png")) oldFire->setVisible(false);
-            m_difficultySprite->addChild(fire, -1);
-            break;
-        }
+    if (Loader::get()->isModLoaded("uproxide.animated_fire") && m_feature > 1) {
+        m_fireSprite->init((GJFeatureState)m_feature);
+        m_fireSprite->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, m_feature == 2 ? 16.875f : 15.875f });
+        if (auto oldFire = getChildBySpriteFrameName(m_difficultySprite, (m_feature == 2 ? "GJ_epicCoin_001.png" :
+                fmt::format("GJ_epicCoin{}_001.png", m_feature - 1)).c_str())) oldFire->setVisible(false);
+        m_difficultySprite->addChild(m_fireSprite, -1);
+        m_fireSprite->release();
     }
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         if (m_moreDifficultiesOverride == 4 || m_moreDifficultiesOverride == 7 || m_moreDifficultiesOverride == 9) {
@@ -511,28 +502,12 @@ bool FRSetFeaturePopup::setup(FakeRateSaveData data, bool legacy, SetIntCallback
         auto feature = static_cast<GJFeatureState>(i);
         auto difficultySprite = GJDifficultySprite::create(m_difficulty, GJDifficultyName::Long);
         difficultySprite->updateFeatureState(feature);
-        if (Loader::get()->isModLoaded("uproxide.animated_fire")) switch (i) {
-            case 2: {
-                auto fire = FireSprite::create(GJFeatureState::Epic);
-                fire->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 16.875f });
-                if (auto oldFire = getChildBySpriteFrameName(difficultySprite, "GJ_epicCoin_001.png")) oldFire->setVisible(false);
-                difficultySprite->addChild(fire, -1);
-                break;
-            }
-            case 3: {
-                auto fire = FireSprite::create(GJFeatureState::Legendary);
-                fire->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 15.875f });
-                if (auto oldFire = getChildBySpriteFrameName(difficultySprite, "GJ_epicCoin2_001.png")) oldFire->setVisible(false);
-                difficultySprite->addChild(fire, -1);
-                break;
-            }
-            case 4: {
-                auto fire = FireSprite::create(GJFeatureState::Mythic);
-                fire->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 15.875f });
-                if (auto oldFire = getChildBySpriteFrameName(difficultySprite, "GJ_epicCoin3_001.png")) oldFire->setVisible(false);
-                difficultySprite->addChild(fire, -1);
-                break;
-            }
+        if (Loader::get()->isModLoaded("uproxide.animated_fire") && i > 1) {
+            auto fire = FireSprite::create((GJFeatureState)i);
+            fire->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, i == 2 ? 16.875f : 15.875f });
+            if (auto oldFire = getChildBySpriteFrameName(difficultySprite, (i == 2 ? "GJ_epicCoin_001.png" :
+                fmt::format("GJ_epicCoin{}_001.png", i - 1)).c_str())) oldFire->setVisible(false);
+            difficultySprite->addChild(fire, -1);
         }
         if (Loader::get()->isModLoaded("uproxide.more_difficulties") && m_moreDifficultiesOverride > 0
             && m_grandpaDemonOverride == 0 && m_demonsInBetweenOverride == 0) {

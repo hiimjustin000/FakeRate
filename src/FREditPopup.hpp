@@ -23,6 +23,7 @@ protected:
     CCSprite* m_dibSprite;
     CCSprite* m_gddpSprite;
     CCSprite* m_starSprite;
+    FireSprite* m_fireSprite;
     CCLabelBMFont* m_starsLabel;
     CCArray* m_coinSprites;
 

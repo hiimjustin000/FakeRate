@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.4.8 (2024-08-31)
+- Fixed a bug where the animated fire in the fake rate popup would sometimes appear twice
+
 ## v1.4.7 (2024-08-29)
 - Added Demons In Between legendary and mythic difficulties
 - Added Animated Fire support to the fake rate popup

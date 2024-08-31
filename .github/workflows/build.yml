@@ -14,6 +14,7 @@ jobs:
         config:
         - name: Windows
           os: windows-latest
+          build-config: RelWithDebInfo
 
         - name: macOS
           os: macos-latest
@@ -35,7 +36,7 @@ jobs:
       - name: Build the mod
         uses: geode-sdk/build-geode-mod@main
         with:
-          build-config: RelWithDebInfo
+          build-config: ${{ matrix.config.build-config || 'Release' }}
           export-pdb: true
           combine: true
           target: ${{ matrix.config.target }}
