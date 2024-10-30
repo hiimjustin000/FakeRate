@@ -1,8 +1,8 @@
 #include "FREffects.hpp"
 
-typedef MiniFunction<void(FakeRateSaveData, bool)> UpdateFakeRateCallback;
-typedef MiniFunction<void(int, int, int, int, int)> SetDifficultyCallback;
-typedef MiniFunction<void(int)> SetIntCallback;
+typedef std::function<void(FakeRateSaveData, bool)> const& UpdateFakeRateCallback;
+typedef std::function<void(int, int, int, int, int)> const& SetDifficultyCallback;
+typedef std::function<void(int)> const& SetIntCallback;
 
 class FREditPopup : public Popup<GJGameLevel*, FakeRateSaveData, UpdateFakeRateCallback> {
 protected:
@@ -23,7 +23,6 @@ protected:
     CCSprite* m_dibSprite;
     CCSprite* m_gddpSprite;
     CCSprite* m_starSprite;
-    FireSprite* m_fireSprite;
     CCLabelBMFont* m_starsLabel;
     CCArray* m_coinSprites;
 

@@ -1,4 +1,8 @@
 # Fake Rate Changelog
+## v1.4.9 (2024-10-30)
+- Fixed a bug where the game would crash when re-rating a level with a More Difficulties difficulty when More Difficulties is disabled
+- Removed Animated Fire support from the fake rate popup (Waiting for Uproxide to fix the bug)
+
 ## v1.4.8 (2024-08-31)
 - Fixed a bug where the animated fire in the fake rate popup would sometimes appear twice
 

@@ -27,11 +27,6 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
     m_difficultySprite->setPositionX(60.0f);
     m_mainLayer->addChild(m_difficultySprite);
 
-    if (Loader::get()->isModLoaded("uproxide.animated_fire")) {
-        m_fireSprite = FireSprite::create(GJFeatureState::Epic);
-        m_fireSprite->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, 16.875f });
-        m_difficultySprite->addChild(m_fireSprite, -1);
-    }
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         m_legacy = Loader::get()->getLoadedMod("uproxide.more_difficulties")->getSettingValue<bool>("legacy-difficulties");
         m_mdSprite = CCSprite::createWithSpriteFrameName(m_legacy ?
@@ -200,7 +195,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
             .stars = stars,
             .feature = m_level->m_featured > 1 ? m_level->m_isEpic + 1 : 0,
             .difficulty = FakeRate::getDifficultyFromLevel(m_level),
-            .moreDifficultiesOverride = stars == 4 || stars == 7 || stars == 9 ? stars : 0,
+            .moreDifficultiesOverride = Loader::get()->isModLoaded("uproxide.more_difficulties") && (stars == 4 || stars == 7 || stars == 9) ? stars : 0,
             .grandpaDemonOverride = 0,
             .demonsInBetweenOverride = 0,
             .gddpIntegrationOverride = 0,
@@ -217,7 +212,6 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
 }
 
 void FREditPopup::updateLabels() {
-    if (m_fireSprite && m_difficultySprite->m_featureState != (GJFeatureState)m_feature) m_fireSprite->retain();
     m_difficultySprite->updateFeatureState((GJFeatureState)m_feature);
     m_difficultySprite->updateDifficultyFrame(m_difficulty, GJDifficultyName::Long);
     auto isDemon = m_difficulty > 5 || m_grandpaDemonOverride > 0 || m_demonsInBetweenOverride > 0 || m_gddpIntegrationOverride > 0;
@@ -232,14 +226,6 @@ void FREditPopup::updateLabels() {
         coin->setColor(m_coins ? ccColor3B { 255, 255, 255 } : ccColor3B { 255, 175, 75 });
     }
     m_difficultySprite->setOpacity(255);
-    if (Loader::get()->isModLoaded("uproxide.animated_fire") && m_feature > 1) {
-        m_fireSprite->init((GJFeatureState)m_feature);
-        m_fireSprite->setPosition(m_difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, m_feature == 2 ? 16.875f : 15.875f });
-        if (auto oldFire = getChildBySpriteFrameName(m_difficultySprite, (m_feature == 2 ? "GJ_epicCoin_001.png" :
-                fmt::format("GJ_epicCoin{}_001.png", m_feature - 1)).c_str())) oldFire->setVisible(false);
-        m_difficultySprite->addChild(m_fireSprite, -1);
-        m_fireSprite->release();
-    }
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         if (m_moreDifficultiesOverride == 4 || m_moreDifficultiesOverride == 7 || m_moreDifficultiesOverride == 9) {
             m_mdSprite->setDisplayFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
@@ -337,7 +323,7 @@ bool FRSetDifficultyPopup::setup(FakeRateSaveData data, bool legacy, SetDifficul
             m_grandpaDemonOverride = 0;
             m_demonsInBetweenOverride = 0;
             m_gddpIntegrationOverride = 0;
-            FakeRate::toggle(m_selected->getNormalImage(), false);
+            if (m_selected) FakeRate::toggle(m_selected->getNormalImage(), false);
             FakeRate::toggle(sender->getNormalImage(), true);
             m_selected = sender;
         });
@@ -502,13 +488,6 @@ bool FRSetFeaturePopup::setup(FakeRateSaveData data, bool legacy, SetIntCallback
         auto feature = static_cast<GJFeatureState>(i);
         auto difficultySprite = GJDifficultySprite::create(m_difficulty, GJDifficultyName::Long);
         difficultySprite->updateFeatureState(feature);
-        if (Loader::get()->isModLoaded("uproxide.animated_fire") && i > 1) {
-            auto fire = FireSprite::create((GJFeatureState)i);
-            fire->setPosition(difficultySprite->getContentSize() / 2 + CCPoint { 0.0f, i == 2 ? 16.875f : 15.875f });
-            if (auto oldFire = getChildBySpriteFrameName(difficultySprite, (i == 2 ? "GJ_epicCoin_001.png" :
-                fmt::format("GJ_epicCoin{}_001.png", i - 1)).c_str())) oldFire->setVisible(false);
-            difficultySprite->addChild(fire, -1);
-        }
         if (Loader::get()->isModLoaded("uproxide.more_difficulties") && m_moreDifficultiesOverride > 0
             && m_grandpaDemonOverride == 0 && m_demonsInBetweenOverride == 0) {
             auto mdSprite = CCSprite::createWithSpriteFrameName((m_legacy ?
@@ -545,14 +524,16 @@ bool FRSetFeaturePopup::setup(FakeRateSaveData data, bool legacy, SetIntCallback
         auto toggle = CCMenuItemExt::createSpriteExtra(difficultySprite, [this, feature](CCMenuItemSpriteExtra* sender) {
             if (sender == m_selected) return;
             m_feature = feature;
-            FakeRate::toggle(m_selected->getNormalImage(), false);
-            if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(m_selected->getNormalImage(), 0)) particleSystem->setVisible(false);
+            if (m_selected) {
+                FakeRate::toggle(m_selected->getNormalImage(), false);
+                if (auto particleSystem = m_selected->getNormalImage()->getChildByType<CCParticleSystemQuad>(0)) particleSystem->setVisible(false);
+            }
             FakeRate::toggle(sender->getNormalImage(), true);
-            if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(sender->getNormalImage(), 0)) particleSystem->setVisible(true);
+            if (auto particleSystem = sender->getNormalImage()->getChildByType<CCParticleSystemQuad>(0)) particleSystem->setVisible(true);
             m_selected = sender;
         });
         FakeRate::toggle(difficultySprite, feature == m_feature);
-        if (auto particleSystem = getChildOfType<CCParticleSystemQuad>(difficultySprite, 0)) particleSystem->setVisible(feature == m_feature);
+        if (auto particleSystem = difficultySprite->getChildByType<CCParticleSystemQuad>(0)) particleSystem->setVisible(feature == m_feature);
         m_selected = feature == m_feature ? toggle : m_selected;
         menuRow->addChild(toggle);
     }
