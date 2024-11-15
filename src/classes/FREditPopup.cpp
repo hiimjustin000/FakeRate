@@ -1,4 +1,8 @@
 #include "FREditPopup.hpp"
+#include "FREffects.hpp"
+#include "TableNode.hpp"
+
+using namespace geode::prelude;
 
 FREditPopup* FREditPopup::create(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRateCallback callback) {
     auto ret = new FREditPopup();
@@ -95,7 +99,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
             updateLabels();
         })->show();
     });
-    difficultyButton->setPosition(200.0f, 150.0f);
+    difficultyButton->setPosition({ 200.0f, 150.0f });
     m_buttonMenu->addChild(difficultyButton);
 
     auto starsButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create(m_level->m_levelLength < 5 ? "Stars" : "Moons",
@@ -105,7 +109,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
             updateLabels();
         })->show();
     });
-    starsButton->setPosition(200.0f, 110.0f);
+    starsButton->setPosition({ 200.0f, 110.0f });
     m_buttonMenu->addChild(starsButton);
 
     auto featureButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Feature", "goldFont.fnt", "GJ_button_02.png", 0.8f), [this](auto) {
@@ -121,20 +125,20 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
             updateLabels();
         })->show();
     });
-    featureButton->setPosition(200.0f, 70.0f);
+    featureButton->setPosition({ 200.0f, 70.0f });
     m_buttonMenu->addChild(featureButton);
 
     auto coinsToggle = CCMenuItemExt::createTogglerWithStandardSprites(0.7f, [this](auto) {
         m_coins = !m_coins;
         updateLabels();
     });
-    coinsToggle->setPosition(30.0f, 30.0f);
+    coinsToggle->setPosition({ 30.0f, 30.0f });
     coinsToggle->toggle(m_coins);
     m_buttonMenu->addChild(coinsToggle);
 
     auto coinsLabel = CCLabelBMFont::create("Coins", "bigFont.fnt");
     coinsLabel->setScale(0.5f);
-    coinsLabel->setPosition(70.0f, 30.0f);
+    coinsLabel->setPosition({ 70.0f, 30.0f });
     m_mainLayer->addChild(coinsLabel);
 
     auto addButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
@@ -179,7 +183,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
         }, false);
         onClose(nullptr);
     });
-    addButton->setPosition(150.0f, 30.0f);
+    addButton->setPosition({ 150.0f, 30.0f });
     m_buttonMenu->addChild(addButton);
 
     auto removeButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Remove", "goldFont.fnt", "GJ_button_06.png", 0.8f), [this, callback](auto) {
@@ -203,7 +207,7 @@ bool FREditPopup::setup(GJGameLevel* level, FakeRateSaveData data, UpdateFakeRat
         }, true);
         onClose(nullptr);
     });
-    removeButton->setPosition(235.0f, 30.0f);
+    removeButton->setPosition({ 235.0f, 30.0f });
     m_buttonMenu->addChild(removeButton);
 
     updateLabels();
@@ -218,7 +222,7 @@ void FREditPopup::updateLabels() {
     m_difficultySprite->setPositionY(100.0f + (isDemon ? 5.0f : 0.0f) + (m_stars != 0 ? 10.0f : 0.0f));
     m_starSprite->setPosition({ m_difficultySprite->getPositionX() + 8.0f, m_difficultySprite->getPositionY() - 30.0f - (isDemon ? 9.0f : 0.0f) });
     m_starSprite->setVisible(m_stars != 0);
-    m_starsLabel->setPosition(m_starSprite->getPositionX() - 8.0f, m_starSprite->getPositionY());
+    m_starsLabel->setPosition({ m_starSprite->getPositionX() - 8.0f, m_starSprite->getPositionY() });
     m_starsLabel->setString(std::to_string(m_stars).c_str());
     m_starsLabel->setVisible(m_stars != 0);
     for (auto coin : CCArrayExt<CCSprite*>(m_coinSprites)) {
@@ -226,9 +230,10 @@ void FREditPopup::updateLabels() {
         coin->setColor(m_coins ? ccColor3B { 255, 255, 255 } : ccColor3B { 255, 175, 75 });
     }
     m_difficultySprite->setOpacity(255);
+    auto sfc = CCSpriteFrameCache::get();
     if (Loader::get()->isModLoaded("uproxide.more_difficulties")) {
         if (m_moreDifficultiesOverride == 4 || m_moreDifficultiesOverride == 7 || m_moreDifficultiesOverride == 9) {
-            m_mdSprite->setDisplayFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+            m_mdSprite->setDisplayFrame(sfc->spriteFrameByName(
                 fmt::format("uproxide.more_difficulties/MD_Difficulty{:02d}{}.png", m_moreDifficultiesOverride, m_legacy ? "_Legacy" : "").c_str()));
             m_mdSprite->setPosition(m_difficultySprite->getPosition() + (m_legacy ? CCPoint { 0.0f, 0.0f } : CCPoint { 0.25f, -0.1f }));
             m_mdSprite->setVisible(true);
@@ -238,7 +243,7 @@ void FREditPopup::updateLabels() {
     }
     if (Loader::get()->isModLoaded("itzkiba.grandpa_demon")) {
         if (m_grandpaDemonOverride > 0 && m_grandpaDemonOverride < 7) {
-            m_grdSprite->setDisplayFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+            m_grdSprite->setDisplayFrame(sfc->spriteFrameByName(
                 fmt::format("itzkiba.grandpa_demon/GrD_demon{}_text.png", m_grandpaDemonOverride - 1).c_str()));
             m_grdSprite->setPosition(m_difficultySprite->getPosition());
             m_grdSprite->setVisible(true);
@@ -256,7 +261,7 @@ void FREditPopup::updateLabels() {
             auto dibFeature = "";
             if (m_feature == 3 && demonsInBetween->getSettingValue<bool>("enable-legendary")) dibFeature = "_4";
             else if (m_feature == 4 && demonsInBetween->getSettingValue<bool>("enable-mythic")) dibFeature = "_5";
-            m_dibSprite->setDisplayFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+            m_dibSprite->setDisplayFrame(sfc->spriteFrameByName(
                 fmt::format("hiimjustin000.demons_in_between/DIB_{:02d}{}_btn2_001.png", m_demonsInBetweenOverride, dibFeature).c_str()));
             m_dibSprite->setPosition(m_difficultySprite->getPosition() + FakeRate::getDIBOffset(m_demonsInBetweenOverride, GJDifficultyName::Long));
             m_dibSprite->setVisible(true);
@@ -267,7 +272,7 @@ void FREditPopup::updateLabels() {
     }
     if (Loader::get()->isModLoaded("minemaker0430.gddp_integration")) {
         if (m_gddpIntegrationOverride > 0 && m_gddpIntegrationOverride < 16) {
-            m_gddpSprite->setDisplayFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+            m_gddpSprite->setDisplayFrame(sfc->spriteFrameByName(
                 FakeRate::getGDDPFrame(m_gddpIntegrationOverride, GJDifficultyName::Long).c_str()));
             m_gddpSprite->setPosition(m_difficultySprite->getPosition() + CCPoint { 0.25f, 30.0f });
             m_gddpSprite->setVisible(true);
@@ -307,7 +312,7 @@ bool FRSetDifficultyPopup::setup(FakeRateSaveData data, bool legacy, SetDifficul
     table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     table->setRowHeight(63.0f);
     table->setContentSize({ 300.0f, 170.0f });
-    table->setPosition(150.0f, 130.0f);
+    table->setPosition({ 150.0f, 130.0f });
     m_mainLayer->addChild(table);
 
     for (auto [d, mdo] : DIFFICULTIES) {
@@ -339,12 +344,12 @@ bool FRSetDifficultyPopup::setup(FakeRateSaveData data, bool legacy, SetDifficul
         callback(m_difficulty, m_moreDifficultiesOverride, m_grandpaDemonOverride, m_demonsInBetweenOverride, m_gddpIntegrationOverride);
         onClose(nullptr);
     });
-    confirmButton->setPosition(150.0f, 25.0f);
+    confirmButton->setPosition({ 150.0f, 25.0f });
     m_buttonMenu->addChild(confirmButton);
 
     auto overrideMenu = CCMenu::create();
     overrideMenu->setLayout(RowLayout::create()->setGap(4.0f)->setAxisAlignment(AxisAlignment::End));
-    overrideMenu->setPosition(245.0f, 25.0f);
+    overrideMenu->setPosition({ 245.0f, 25.0f });
     overrideMenu->setContentSize({ 100.0f, 30.0f });
     m_mainLayer->addChild(overrideMenu);
 
@@ -397,7 +402,7 @@ bool FRSetStarsPopup::setup(int stars, bool platformer, SetIntCallback callback)
 
     m_input = TextInput::create(150.0f, platformer ? "Moons" : "Stars");
     m_input->setCommonFilter(CommonFilter::Int);
-    m_input->setPosition(125.0f, 80.0f);
+    m_input->setPosition({ 125.0f, 80.0f });
     m_input->getInputNode()->setLabelPlaceholderColor({ 120, 170, 240 });
     m_input->setString(std::to_string(m_stars));
     m_input->setMaxCharCount(11);
@@ -412,7 +417,7 @@ bool FRSetStarsPopup::setup(int stars, bool platformer, SetIntCallback callback)
     m_mainLayer->addChild(m_input);
 
     m_starLayout = CCNode::create();
-    m_starLayout->setPosition(125.0f, 52.5f);
+    m_starLayout->setPosition({ 125.0f, 52.5f });
     m_starLayout->setContentSize({ 250.0f, 15.0f });
     m_starLayout->setAnchorPoint({ 0.5f, 0.5f });
     m_starLayout->setLayout(RowLayout::create()->setGap(1.75f)->setAutoScale(false));
@@ -433,7 +438,7 @@ bool FRSetStarsPopup::setup(int stars, bool platformer, SetIntCallback callback)
         m_label->setString(stars.c_str());
         m_starLayout->updateLayout();
     });
-    leftButton->setPosition(30.0f, 80.0f);
+    leftButton->setPosition({ 30.0f, 80.0f });
     m_buttonMenu->addChild(leftButton);
 
     auto rightButton = CCMenuItemExt::createSpriteExtraWithFrameName("edit_rightBtn_001.png", 1.1f, [this](auto) {
@@ -443,14 +448,14 @@ bool FRSetStarsPopup::setup(int stars, bool platformer, SetIntCallback callback)
         m_label->setString(stars.c_str());
         m_starLayout->updateLayout();
     });
-    rightButton->setPosition(220.0f, 80.0f);
+    rightButton->setPosition({ 220.0f, 80.0f });
     m_buttonMenu->addChild(rightButton);
 
     auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
         callback(m_stars);
         onClose(nullptr);
     });
-    confirmButton->setPosition(125.0f, 25.0f);
+    confirmButton->setPosition({ 125.0f, 25.0f });
     m_buttonMenu->addChild(confirmButton);
 
     return true;
@@ -479,8 +484,8 @@ bool FRSetFeaturePopup::setup(FakeRateSaveData data, bool legacy, SetIntCallback
 
     auto menuRow = CCMenu::create();
     menuRow->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
-    menuRow->setPosition(150.0f, 80.0f + (data.difficulty > 5 || data.grandpaDemonOverride > 0 ||
-        data.demonsInBetweenOverride > 0 || data.gddpIntegrationOverride > 0 ? 5.0f : 0.0f));
+    menuRow->setPosition({ 150.0f, 80.0f + (data.difficulty > 5 || data.grandpaDemonOverride > 0 ||
+        data.demonsInBetweenOverride > 0 || data.gddpIntegrationOverride > 0 ? 5.0f : 0.0f) });
     menuRow->setContentSize({ 300.0f, 50.0f });
     m_mainLayer->addChild(menuRow);
 
@@ -544,7 +549,7 @@ bool FRSetFeaturePopup::setup(FakeRateSaveData data, bool legacy, SetIntCallback
         callback(static_cast<int>(m_feature));
         onClose(nullptr);
     });
-    confirmButton->setPosition(150.0f, 25.0f);
+    confirmButton->setPosition({ 150.0f, 25.0f });
     m_buttonMenu->addChild(confirmButton);
 
     return true;
@@ -570,7 +575,7 @@ bool FRGRDPopup::setup(int grandpaDemonOverride, SetIntCallback callback) {
     table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     table->setRowHeight(65.0f);
     table->setContentSize({ 250.0f, 130.0f });
-    table->setPosition(125.0f, 107.5f);
+    table->setPosition({ 125.0f, 107.5f });
     m_mainLayer->addChild(table);
 
     for (int i = 1; i < 7; i++) {
@@ -592,7 +597,7 @@ bool FRGRDPopup::setup(int grandpaDemonOverride, SetIntCallback callback) {
         callback(m_grandpaDemonOverride);
         onClose(nullptr);
     });
-    confirmButton->setPosition(125.0f, 25.0f);
+    confirmButton->setPosition({ 125.0f, 25.0f });
     m_buttonMenu->addChild(confirmButton);
 
     return true;
@@ -618,7 +623,7 @@ bool FRDIBPopup::setup(int demonsInBetweenOverride, SetIntCallback callback) {
     table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     table->setRowHeight(60.0f);
     table->setContentSize({ 350.0f, 240.0f });
-    table->setPosition(175.0f, 160.0f);
+    table->setPosition({ 175.0f, 160.0f });
     m_mainLayer->addChild(table);
 
     for (int i = 1; i < 21; i++) {
@@ -640,7 +645,7 @@ bool FRDIBPopup::setup(int demonsInBetweenOverride, SetIntCallback callback) {
         callback(m_demonsInBetweenOverride);
         onClose(nullptr);
     });
-    confirmButton->setPosition(175.0f, 25.0f);
+    confirmButton->setPosition({ 175.0f, 25.0f });
     m_buttonMenu->addChild(confirmButton);
 
     return true;
@@ -666,7 +671,7 @@ bool FRGDDPPopup::setup(int gddpIntegrationOverride, SetIntCallback callback) {
     table->setRowLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Even));
     table->setRowHeight(60.0f);
     table->setContentSize({ 350.0f, 180.0f });
-    table->setPosition(175.0f, 130.0f);
+    table->setPosition({ 175.0f, 130.0f });
     m_mainLayer->addChild(table);
 
     for (int i = 1; i < 16; i++) {
@@ -688,7 +693,7 @@ bool FRGDDPPopup::setup(int gddpIntegrationOverride, SetIntCallback callback) {
         callback(m_gddpIntegrationOverride);
         onClose(nullptr);
     });
-    confirmButton->setPosition(175.0f, 25.0f);
+    confirmButton->setPosition({ 175.0f, 25.0f });
     m_buttonMenu->addChild(confirmButton);
 
     return true;

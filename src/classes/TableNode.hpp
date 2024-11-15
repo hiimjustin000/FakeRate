@@ -1,10 +1,8 @@
-#include "FakeRate.hpp"
-
-class TableNode : public CCNode {
+class TableNode : public cocos2d::CCNode {
 protected:
-    CCArray* m_menus;
-    AxisLayout* m_columnLayout;
-    AxisLayout* m_rowLayout;
+    cocos2d::CCArray* m_menus;
+    geode::AxisLayout* m_columnLayout;
+    geode::AxisLayout* m_rowLayout;
     int m_columns;
     int m_rows;
     float m_rowHeight;
@@ -13,8 +11,8 @@ protected:
 public:
     static TableNode* create(int columns, int rows);
 
-    void setColumnLayout(AxisLayout*);
-    void setRowLayout(AxisLayout*);
+    void setColumnLayout(geode::AxisLayout*);
+    void setRowLayout(geode::AxisLayout*);
     void setRowHeight(float);
     void updateAllLayouts();
     void addButton(CCMenuItemSpriteExtra*);

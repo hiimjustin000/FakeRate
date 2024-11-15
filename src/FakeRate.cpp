@@ -1,5 +1,7 @@
 #include "FakeRate.hpp"
 
+using namespace geode::prelude;
+
 int FakeRate::getBaseCurrency(int stars) {
     switch (stars) {
         case 0: case 1: return 0;
@@ -24,10 +26,10 @@ int FakeRate::getDifficultyFromLevel(GJGameLevel* level) {
 
 std::string FakeRate::getSpriteName(CCSprite* sprite) {
     if (auto texture = sprite->getTexture()) {
-        for (auto [key, frame] : CCDictionaryExt<std::string, CCSpriteFrame*>(CCSpriteFrameCache::sharedSpriteFrameCache()->m_pSpriteFrames)) {
+        for (auto [key, frame] : CCDictionaryExt<std::string, CCSpriteFrame*>(CCSpriteFrameCache::get()->m_pSpriteFrames)) {
             if (frame->getTexture() == texture && frame->getRect() == sprite->getTextureRect()) return key;
         }
-        for (auto [key, obj] : CCDictionaryExt<std::string, CCTexture2D*>(CCTextureCache::sharedTextureCache()->m_pTextures)) {
+        for (auto [key, obj] : CCDictionaryExt<std::string, CCTexture2D*>(CCTextureCache::get()->m_pTextures)) {
             if (obj == texture) return key;
         }
     }
@@ -35,15 +37,12 @@ std::string FakeRate::getSpriteName(CCSprite* sprite) {
 }
 
 void FakeRate::toggle(CCNode* node, bool enabled) {
-    if (auto sprite = typeinfo_cast<CCSprite*>(node)) {
+    if (auto sprite = typeinfo_cast<CCRGBAProtocol*>(node)) {
         auto color = enabled ? ccColor3B { 255, 255, 255 } : ccColor3B { 125, 125, 125 };
         sprite->setColor(color);
 
-        if (sprite->getChildren()) {
-            auto children = sprite->getChildren();
-            for (int i = 0; i < children->count(); i++) {
-                if (auto child = typeinfo_cast<CCSprite*>(children->objectAtIndex(i))) child->setColor(color);
-            }
+        if (auto children = node->getChildren()) for (auto child : CCArrayExt<CCNode*>(children)) {
+            if (auto sprite = typeinfo_cast<CCRGBAProtocol*>(child)) sprite->setColor(color);
         }
     }
 }
@@ -101,26 +100,14 @@ int FakeRate::getGRDOverride(CCSprite* sprite) {
     auto sprName = getSpriteName(sprite);
 
     auto pos = sprName.find("GrD_demon");
-    if (pos != std::string::npos) {
-        auto num = sprName.substr(pos + 9);
-        auto str = numFromString<int>(num);
-        if (str.has_value()) return str.value() + 1;
-        else return 0;
-    }
-    else return 0;
+    return pos != std::string::npos ? numFromString<int>(sprName.substr(pos + 9)).unwrapOr(0) : 0;
 }
 
 int FakeRate::getDIBOverride(CCSprite* sprite) {
     auto sprName = getSpriteName(sprite);
 
     auto pos = sprName.find("DIB_");
-    if (pos != std::string::npos) {
-        auto num = sprName.substr(pos + 4);
-        auto str = numFromString<int>(num);
-        if (str.has_value()) return str.value();
-        else return 0;
-    }
-    else return 0;
+    return pos != std::string::npos ? numFromString<int>(sprName.substr(pos + 4)).unwrapOr(0) : 0;
 }
 
 int FakeRate::getGDDPOverride(CCSprite* sprite) {
@@ -131,10 +118,8 @@ int FakeRate::getGDDPOverride(CCSprite* sprite) {
 
     auto pos = sprName.find("DP_");
     if (pos != std::string::npos) {
-        auto num = sprName.substr(pos + 3);
-        auto str = GDDP_INDICES.find(num);
-        if (str != GDDP_INDICES.end()) return str->second;
-        else return 0;
+        auto str = GDDP_INDICES.find(sprName.substr(pos + 3));
+        return str != GDDP_INDICES.end() ? str->second : 0;
     }
     else return 0;
 }

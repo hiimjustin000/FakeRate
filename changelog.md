@@ -1,4 +1,7 @@
 # Fake Rate Changelog
+## v1.4.10-beta.1 (2024-11-13)
+- Ported to Geometry Dash v2.207
+
 ## v1.4.9 (2024-10-30)
 - Fixed a bug where the game would crash when re-rating a level with a More Difficulties difficulty when More Difficulties is disabled
 - Removed Animated Fire support from the fake rate popup (Waiting for Uproxide to fix the bug)

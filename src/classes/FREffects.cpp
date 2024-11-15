@@ -1,5 +1,7 @@
 #include "FREffects.hpp"
 
+using namespace geode::prelude;
+
 CCSprite* FREffects::grdInfinity() {
     CCSprite* infinity = CCSprite::createWithSpriteFrameName("itzkiba.grandpa_demon/GrD_demon4_infinity.png");
     infinity->setZOrder(30);
@@ -21,7 +23,7 @@ CCSprite* FREffects::grdInfinity() {
 }
 
 std::pair<CCSprite*, CCSprite*> FREffects::infinityBackgrounds(bool grandpa) {
-    auto width = CCDirector::sharedDirector()->getWinSize().width;
+    auto width = CCDirector::get()->getWinSize().width;
 
     auto bg1 = CCSprite::create("itzkiba.grandpa_demon/GrD_demon4_bg.png");
     bg1->setBlendFunc({ 1, 1 });
@@ -101,7 +103,7 @@ std::pair<CCSprite*, CCSprite*> FREffects::infinityBackgrounds(bool grandpa) {
 }
 
 CCSprite* FREffects::mythicalBackground() {
-    auto width = CCDirector::sharedDirector()->getWinSize().width;
+    auto width = CCDirector::get()->getWinSize().width;
 
     auto bg1 = CCSprite::create("itzkiba.grandpa_demon/GrD_demon4_bg.png");
     bg1->setBlendFunc({ 1, 1 });
@@ -144,7 +146,7 @@ CCSprite* FREffects::mythicalBackground() {
 }
 
 CCSprite* FREffects::legendaryBackground() {
-    auto width = CCDirector::sharedDirector()->getWinSize().width;
+    auto width = CCDirector::get()->getWinSize().width;
 
     auto bg1 = CCSprite::create("itzkiba.grandpa_demon/GrD_demon4_bg.png");
     bg1->setBlendFunc({ 1, 1 });

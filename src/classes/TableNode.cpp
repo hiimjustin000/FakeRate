@@ -1,5 +1,7 @@
 #include "TableNode.hpp"
 
+using namespace geode::prelude;
+
 TableNode* TableNode::create(int columns, int rows) {
     auto ret = new TableNode();
     if (ret->init(columns, rows)) {

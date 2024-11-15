@@ -1,10 +1,10 @@
-#include "FREffects.hpp"
+#include "../FakeRate.hpp"
 
 typedef std::function<void(FakeRateSaveData, bool)> const& UpdateFakeRateCallback;
 typedef std::function<void(int, int, int, int, int)> const& SetDifficultyCallback;
 typedef std::function<void(int)> const& SetIntCallback;
 
-class FREditPopup : public Popup<GJGameLevel*, FakeRateSaveData, UpdateFakeRateCallback> {
+class FREditPopup : public geode::Popup<GJGameLevel*, FakeRateSaveData, UpdateFakeRateCallback> {
 protected:
     GJGameLevel* m_level;
     int m_stars;
@@ -17,14 +17,14 @@ protected:
     bool m_coins;
     bool m_legacy;
     GJDifficultySprite* m_difficultySprite;
-    CCSprite* m_mdSprite;
-    CCSprite* m_grdSprite;
-    CCSprite* m_grdInfinity;
-    CCSprite* m_dibSprite;
-    CCSprite* m_gddpSprite;
-    CCSprite* m_starSprite;
-    CCLabelBMFont* m_starsLabel;
-    CCArray* m_coinSprites;
+    cocos2d::CCSprite* m_mdSprite;
+    cocos2d::CCSprite* m_grdSprite;
+    cocos2d::CCSprite* m_grdInfinity;
+    cocos2d::CCSprite* m_dibSprite;
+    cocos2d::CCSprite* m_gddpSprite;
+    cocos2d::CCSprite* m_starSprite;
+    cocos2d::CCLabelBMFont* m_starsLabel;
+    cocos2d::CCArray* m_coinSprites;
 
     bool setup(GJGameLevel*, FakeRateSaveData, UpdateFakeRateCallback) override;
     void updateLabels();
@@ -34,7 +34,7 @@ public:
     ~FREditPopup() override;
 };
 
-class FRSetDifficultyPopup : public Popup<FakeRateSaveData, bool, SetDifficultyCallback> {
+class FRSetDifficultyPopup : public geode::Popup<FakeRateSaveData, bool, SetDifficultyCallback> {
 protected:
     inline static std::vector<std::pair<int, int>> DIFFICULTIES = {
         { 0, 0 }, { -1, 0 }, { 1, 0 }, { 2, 0 }, { 3, 4 }, { 3, 0 }, { 4, 0 }, { 4, 7 },
@@ -54,11 +54,11 @@ public:
     static FRSetDifficultyPopup* create(FakeRateSaveData, bool, SetDifficultyCallback);
 };
 
-class FRSetStarsPopup : public Popup<int, bool, SetIntCallback> {
+class FRSetStarsPopup : public geode::Popup<int, bool, SetIntCallback> {
 protected:
     int m_stars;
-    TextInput* m_input;
-    CCLabelBMFont* m_label;
+    geode::TextInput* m_input;
+    cocos2d::CCLabelBMFont* m_label;
     CCNode* m_starLayout;
 
     bool setup(int, bool, SetIntCallback) override;
@@ -66,7 +66,7 @@ public:
     static FRSetStarsPopup* create(int, bool, SetIntCallback);
 };
 
-class FRSetFeaturePopup : public Popup<FakeRateSaveData, bool, SetIntCallback> {
+class FRSetFeaturePopup : public geode::Popup<FakeRateSaveData, bool, SetIntCallback> {
 protected:
     GJFeatureState m_feature;
     int m_difficulty;
@@ -82,7 +82,7 @@ public:
     static FRSetFeaturePopup* create(FakeRateSaveData, bool, SetIntCallback);
 };
 
-class FRGRDPopup : public Popup<int, SetIntCallback> {
+class FRGRDPopup : public geode::Popup<int, SetIntCallback> {
 protected:
     int m_grandpaDemonOverride;
     CCMenuItemSpriteExtra* m_selected;
@@ -92,7 +92,7 @@ public:
     static FRGRDPopup* create(int, SetIntCallback);
 };
 
-class FRDIBPopup : public Popup<int, SetIntCallback> {
+class FRDIBPopup : public geode::Popup<int, SetIntCallback> {
 protected:
     int m_demonsInBetweenOverride;
     CCMenuItemSpriteExtra* m_selected;
@@ -102,7 +102,7 @@ public:
     static FRDIBPopup* create(int, SetIntCallback);
 };
 
-class FRGDDPPopup : public Popup<int, SetIntCallback> {
+class FRGDDPPopup : public geode::Popup<int, SetIntCallback> {
 protected:
     int m_gddpIntegrationOverride;
     CCMenuItemSpriteExtra* m_selected;
