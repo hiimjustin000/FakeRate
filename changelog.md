@@ -1,5 +1,8 @@
 # Fake Rate Changelog
-## v1.4.10-beta.1 (2024-11-13)
+## v1.4.10 (2024-11-15)
+- Ported to Geode v4.0.0-beta.1
+
+## v1.4.10-beta.1 (2024-11-15)
 - Ported to Geometry Dash v2.207
 
 ## v1.4.9 (2024-10-30)
